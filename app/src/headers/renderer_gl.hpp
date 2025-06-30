@@ -17,9 +17,16 @@ namespace Nashi {
 			0.5f, -0.5f, 0.0f,
 			0.0f, 0.5f, 0.0f
 		};
+		unsigned int m_glVBO;
+		unsigned int m_glVAO;
 
+		unsigned int m_glVertexShader;
+		unsigned int m_glFragmentShader;
+		unsigned int m_glShaderProgram;
 
 		void resizeWindow();
+		unsigned int createShader(GLenum shaderType, const std::string& filename);
+		void createShaderProgram();
 	public:
 		bool m_windowResized = false;
 		OpenGLRenderer(SDL_Window* window, SDL_Event event);

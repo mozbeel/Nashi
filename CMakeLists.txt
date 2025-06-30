@@ -135,14 +135,29 @@ if(NASHI_USE_VULKAN)
   add_custom_target(shaders ALL DEPENDS ${SPIRV_SHADERS})
   add_dependencies(nashi shaders)
   add_custom_command(TARGET nashi POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -DSRC="${SPIRV_DIR}" -DDEST="$<TARGET_FILE_DIR:nashi>" -P "${CMAKE_SOURCE_DIR}/CopyShaders.cmake"
+    COMMAND ${CMAKE_COMMAND} -DSRC="${SPIRV_DIR}" -DDEST="$<TARGET_FILE_DIR:nashi>" -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
     COMMENT "Copying compiled SPIR-V shaders to binary directory"
   )
+
 elseif(NASHI_USE_OPENGL)
   target_link_libraries(nashi PRIVATE glad glm::glm OpenGL::GL ${MIDDLEWARE})
   target_include_directories(glad PUBLIC ${GLAD_INCLUDE_PATH})
   target_compile_definitions(nashi PRIVATE NASHI_USE_OPENGL)
-  
+
+  add_custom_command(TARGET nashi POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_CURRENT_SOURCE_DIR}/app/src/shaders"
+      "$<TARGET_FILE_DIR:nashi>/shaders"
+    COMMENT "Copying shaders directory"
+  )
+
+  add_custom_command(TARGET nashi POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${CMAKE_CURRENT_SOURCE_DIR}/app/src/shaders"
+      "${CMAKE_CURRENT_BINARY_DIR}/shaders"
+    COMMENT "Copying shaders directory"
+  )
+    
 endif()
 
 # Optional: Strip binary on release builds for non-MSVC

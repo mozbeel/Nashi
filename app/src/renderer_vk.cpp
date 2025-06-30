@@ -421,8 +421,10 @@ namespace Nashi {
     }
 
     void VulkanRenderer::createGraphicsPipeline() {
-        auto vertShaderCode = readFile("shaders/basic.vert.spv");
-        auto fragShaderCode = readFile("shaders/basic.frag.spv");
+        std::filesystem::path vertShaderPath = std::filesystem::current_path() / "shaders" / "basic.vert.spv";
+        std::filesystem::path fragShaderPath = std::filesystem::current_path() / "shaders" / "basic.frag.spv";
+        auto vertShaderCode = readFile(vertShaderPath.string());
+        auto fragShaderCode = readFile(fragShaderPath.string());
 
         // TODO: Draw the rest of the owl .)
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
