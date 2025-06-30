@@ -1,1 +1,3 @@
 builds/
+vendor/glad/include
+vendor/glad/src
