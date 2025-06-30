@@ -29,9 +29,9 @@ Nashi is a modern, high-performance rendering library built with a focus on simp
   - Linux (using Vulkan)
   - macOS (using Metal/MoltenVK)
 - Mobile
-  - iOS (using Metal)
+  - iOS (using Metal/MoltenVK)
   - Android (using Vulkan)
-- Web (using WebGL)
+- Web (using WebGL/WebGPU)
 
 ## Examples
 
