@@ -79,13 +79,6 @@ namespace Nashi {
         static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
     };
 
-    struct UniformBufferObject {
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-    };
-
-
 
     class VulkanRenderer : IRenderer {
     private:

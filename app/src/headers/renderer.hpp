@@ -3,6 +3,10 @@
 #   include <SDL3/SDL_vulkan.h>
 #endif
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -53,6 +57,12 @@ static std::vector<char> readFileText(const std::string& filename) {
 }
 
 namespace Nashi {
+    struct UniformBufferObject {
+        alignas(16) glm::mat4 model;
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 proj;
+    };
+
 	class IRenderer {
 	public:
 		bool m_windowResized;

@@ -57,6 +57,7 @@ if(WIN32)
   #   message(WARNING "Vulkan loader NOT found. Disabling Vulkan support.")
   #   set(NASHI_USE_VULKAN OFF)
   # endif()
+
   find_package(OpenGL REQUIRED)
   add_library(glad STATIC
     ${NASHI_ROOT}/vendor/glad/src/glad.c
