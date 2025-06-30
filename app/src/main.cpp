@@ -1,5 +1,7 @@
 #ifdef NASHI_USE_VULKAN
 #   include <renderer_vk.hpp>
+#elif NASHI_USE_OPENGL
+#   include <renderer_gl.hpp>
 #endif
 
 
@@ -10,10 +12,22 @@ int main() {
   if(SDL_Init(SDL_INIT_VIDEO) == false) {
     return EXIT_FAILURE;
   }
+
+#ifdef NASHI_USE_OPENGL
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+
+#endif
+
   SDL_Window* window = SDL_CreateWindow(SDL_WINDOW_NAME, 1280, 720, 
       SDL_WINDOW_RESIZABLE |
     #ifdef NASHI_USE_VULKAN
       SDL_WINDOW_VULKAN
+    #elif NASHI_USE_OPENGL
+      SDL_WINDOW_OPENGL
     #else
       0
     #endif
@@ -24,6 +38,10 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  bool running = true;
+  SDL_Event event;
+  memset(&event, 0, sizeof(event));
+#ifdef NASHI_USE_VULKAN
   unsigned int extensionCount = 0;
   if (!SDL_Vulkan_GetInstanceExtensions(&extensionCount)) {
       // handle error
@@ -46,12 +64,13 @@ int main() {
   extensions[0] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
   SDL_memcpy(&extensions[1], instance_extensions, count_instance_extensions * sizeof(const char*)); 
 
-  bool running = true;
-  SDL_Event event;
-  memset(&event, 0, sizeof(event));
-  VulkanRenderer* vkRenderer = new VulkanRenderer(extensions, countExtensions, window, event);
-
+  Nashi::VulkanRenderer* vkRenderer = new Nashi::VulkanRenderer(extensions, countExtensions, window, event);
   vkRenderer->init();
+#elif NASHI_USE_OPENGL
+  Nashi::OpenGLRenderer* openGLRenderer = new Nashi::OpenGLRenderer(window, event);
+  openGLRenderer->init();
+#endif
+
 
   while(running) {
     while (SDL_PollEvent(&event)) {
@@ -61,14 +80,27 @@ int main() {
           running = false;
           break;
         case SDL_EVENT_WINDOW_RESIZED:
-          vkRenderer->framebufferResized = true;
+#ifdef NASHI_USE_VULKAN
+          vkRenderer->m_windowResized = true;
+#elif NASHI_USE_OPENGL
+          openGLRenderer->m_windowResized = true;
+#endif
+          break;
       }
     }
+#ifdef NASHI_USE_VULKAN
     vkRenderer->draw();
+#elif NASHI_USE_OPENGL
+    openGLRenderer->draw();
+#endif
 
   }
-
+#ifdef NASHI_USE_VULKAN
   vkRenderer->cleanup();
+#elif NASHI_USE_OPENGL
+  openGLRenderer->cleanup();
+#endif
+
   SDL_DestroyWindow(window);
   SDL_Quit();
 
