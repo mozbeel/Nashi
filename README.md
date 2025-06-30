@@ -1,6 +1,7 @@
 <div align="center">
   <div>
-      <img src="docs/assets/nashi-txt.png"></img>
+      <img src="docs/assets/nashi-no-txt.png"></img>
+      <h1>Nashi</h1>
   </div>
   <img src="https://img.shields.io/badge/written%20in-C++-00599C?logo=c%2B%2B&logoColor=white">
   <img src="https://img.shields.io/badge/✓-cross--platform🖥️-brightgreen"></img>
