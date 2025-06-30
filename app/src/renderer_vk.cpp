@@ -1,4 +1,4 @@
-#ifdef ILUMA_USE_VULKAN
+#ifdef NASHI_USE_VULKAN
 #include <renderer_vk.hpp>
 
 
@@ -16,7 +16,7 @@ void VulkanRenderer::createInstance() {
 
   VkApplicationInfo appInfo {};
   appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-  appInfo.pApplicationName = "iLuma";
+  appInfo.pApplicationName = "nashi";
   appInfo.applicationVersion = VK_MAKE_VERSION(1, 1, 0);
   appInfo.engineVersion = VK_MAKE_VERSION(1, 1, 0);
   appInfo.apiVersion = VK_API_VERSION_1_1;

@@ -1,4 +1,4 @@
-#ifdef ILUMA_USE_VULKAN
+#ifdef NASHI_USE_VULKAN
 #include <vulkan/vulkan.h>
 
 #include <glm/glm.hpp>
@@ -16,7 +16,7 @@
 #include <array>
 
 
-#ifndef ILUMA_VR
+#ifndef NASHI_VR
 #   include <SDL3/SDL.h>
 #   include <SDL3/SDL_vulkan.h>
 #endif
@@ -27,7 +27,7 @@
 #  include <vulkan/vulkan_win32.h>
 #endif
 
-#define SDL_WINDOW_NAME "Vulkan Window (iLuma)"
+#define SDL_WINDOW_NAME "Vulkan Window (nashi)"
 
 const std::vector<const char*> validationLayers = {
   "VK_LAYER_KHRONOS_validation"

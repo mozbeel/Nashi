@@ -1,4 +1,4 @@
-#ifdef ILUMA_USE_VULKAN
+#ifdef NASHI_USE_VULKAN
 #   include <renderer_vk.hpp>
 #endif
 
@@ -12,7 +12,7 @@ int main() {
   }
   SDL_Window* window = SDL_CreateWindow(SDL_WINDOW_NAME, 1280, 720, 
       SDL_WINDOW_RESIZABLE |
-    #ifdef ILUMA_USE_VULKAN
+    #ifdef NASHI_USE_VULKAN
       SDL_WINDOW_VULKAN
     #else
       0

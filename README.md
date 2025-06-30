@@ -1,84 +1,49 @@
 <div align="center">
-  <img src="docs/assets/iluma-logo-ntxt.png" width="128"></img>
-  <h1>iLuma</h1>
+  <h1>Nashi</h1>
   
-  <img src="https://img.shields.io/badge/supports-Lua-000080?logo=lua&logoColor=white">
   <img src="https://img.shields.io/badge/written%20in-C++-00599C?logo=c%2B%2B&logoColor=white">
 
-  <h4>A lightweight game framework for Lua and C++</h4>
-  <h5>*Most of these meantioned features are not supported yet because of very early development of iLuma</h4>
+  <h4>A modern, lightweight rendering library</h4>
+  <h5>*Most features are still in development as Nashi is in early stages</h5>
 </div>
-
 
 ## About the Project
 
-iLuma is a modern, high-performance game framework (3D and 2D) built by passion and designed for fun development of games and interactive applications on all major desktop and mobile platforms. It's designed to be used very close to functionality of a full game engine like Unity, but also gives you the control to dive into the nitty-gritty low-level code. iLuma is in the very early stages of development. 
+Nashi is a modern, high-performance rendering library built with a focus on simplicity and efficiency. It provides a flexible graphics API abstraction layer that works across multiple platforms and graphics backends. Designed to give developers fine-grained control over rendering while maintaining an intuitive API, Nashi is ideal for games, visualization tools, and other graphics applications. The project is currently in early development stages.
 
 ## Features
 
-- ✨ Cross-platform support: Build games for desktop (Windows, Linux, macOS) and mobile (iOS, Android) from a single codebase.
-- 📱 Touch and sensor input support for mobile devices.
-- 📂 Open source and actively developed.
-- 🌙 Recommended use of Lua
+- ✨ Cross-platform graphics abstraction layer
+- 🎨 Modern rendering techniques and effects
+- 📂 Open source and actively developed
+- ⚡ High performance with minimal overhead
+- 🔧 Fine-grained control over rendering pipeline
 
-## Supported Platforms
+## Supported Platforms & APIs
 
 - Desktop
-  - Windows (using Vukan)
-  - Linux (using Vukan)
-  - macOS (using MoltenVK)
+  - Windows (using Vulkan/DirectX 12)
+  - Linux (using Vulkan)
+  - macOS (using Metal/MoltenVK)
 - Mobile
-  - iOS (using MoltenVK)
-  - Android (using Vukan)
-- Web (using OpenGL ES 3.0 -> WebGL 2.0)
-- VR
-  - Meta Quest 2/3 Standalone (using Vulkan)
-  - Pico Headsets Standalone (using Vulkan)
-  - PCVR (using desktop-specific graphics API)
-- Console support is planned, but there's no support yet
+  - iOS (using Metal)
+  - Android (using Vulkan)
+- Web (using WebGL)
 
-## Samples
+## Examples
 
-### Flappy Bird
+### Basic Triangle
 
-(not yet)
+(coming soon)
 
-### Snake
+### PBR Materials
 
-(not yet)
+(coming soon)
 
-## Projects built with iLuma
+## Projects using Nashi
 
 None (yet)
 
 ## Getting Started
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/mozbeel/iLuma.git
-   ```
-2. Follow the platform-specific setup instructions in the `docs/` folder. (not available yet)
-3. Build and run the sample projects to see iLuma in action.
-
-## Example 
-
-(soon going to be implemented)
-
-## Development Status
-
-If you want to see the current development status and what features I'm currently adding you can visit my Trello Board to see exactly what I'm doing: <a href="https://trello.com/b/OXJbPyC0/iluma">My Trello</a>
-
-## Contributing
-
-Contributions are not wished right now. I want to get the base of the code done, maybe then I'll accept contributions. Reports of issues in early development are needed!
-
-
-## License
-
-This project is licensed under the MIT License. (not yet)
-
-<!-- ## Special Thanks
-
-- @madebr: Thank you for actually making android work for my project, couldn't have done it without you. 
-
---- -->

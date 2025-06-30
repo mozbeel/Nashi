@@ -1,1 +1,1 @@
-start builds/windows/iLuma.sln
+start builds/windows/nashi.sln
