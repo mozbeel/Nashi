@@ -1,6 +1,7 @@
 <div align="center">
-  <img src="docs/assets/nashi-txt.png"></img>
-  
+  <div>
+      <img src="docs/assets/nashi-txt.png"></img>
+  </div>
   <img src="https://img.shields.io/badge/written%20in-C++-00599C?logo=c%2B%2B&logoColor=white">
   <img src="https://img.shields.io/badge/✓-cross--platform🖥️-brightgreen"></img>
 
