@@ -1,7 +1,8 @@
 <div align="center">
-  <h1>Nashi</h1>
+  <img src="docs/assets/nashi-txt.png"></img>
   
   <img src="https://img.shields.io/badge/written%20in-C++-00599C?logo=c%2B%2B&logoColor=white">
+  <img src="https://img.shields.io/badge/✓-cross--platform🖥️-brightgreen"></img>
 
   <h4>A modern, lightweight rendering library</h4>
   <h5>*Most features are still in development as Nashi is in early stages</h5>
