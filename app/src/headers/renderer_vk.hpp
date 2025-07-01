@@ -29,6 +29,9 @@
 #define SDL_WINDOW_NAME "Vulkan Window (nashi)"
 
 namespace Nashi {
+    auto srgbToLinear = [](float c) {
+        return (c <= 0.04045f) ? c / 12.92f : pow((c + 0.055f) / 1.055f, 2.4f);
+        };
 
     const std::vector<const char*> validationLayers = {
       "VK_LAYER_KHRONOS_validation"
@@ -38,7 +41,7 @@ namespace Nashi {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
-#ifdef NODEBUG
+#ifndef _DEBUG
     const bool enableValidationLayers = false;
 #else
     const bool enableValidationLayers = true;
@@ -49,6 +52,7 @@ namespace Nashi {
     VkResult res = (expr); \
     if (res) { \
       std::cout << "Vulkan error: " << res << std::endl; \
+	  throw std::runtime_error("Vulkan error: " + res + std::endl) \
     } \
   } while (0)
 

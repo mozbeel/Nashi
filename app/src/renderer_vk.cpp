@@ -812,7 +812,12 @@ namespace Nashi {
         renderPassInfo.renderArea.offset = { 0, 0 };
         renderPassInfo.renderArea.extent = m_vkSwapChainExtent;
 
-        VkClearValue clearColor = { {129.0f / 255.0f, 186.0f / 255.0f, 219.0f / 255.0f, 1.0f} };
+        VkClearValue clearColor = { {
+                srgbToLinear(129.0f / 255.0f),
+                srgbToLinear(186.0f / 255.0f), 
+                srgbToLinear(219.0f / 255.0f), 1.0f 
+        } };
+
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;
 

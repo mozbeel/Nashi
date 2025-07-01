@@ -2,6 +2,8 @@
 #   include <renderer_vk.hpp>
 #elif NASHI_USE_OPENGL
 #   include <renderer_gl.hpp>
+#elif NASHI_USE_DIRECT3D12
+#   include <renderer_d3d12.hpp>
 #endif
 
 
@@ -19,7 +21,6 @@ int main() {
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-
 #endif
 
   SDL_Window* window = SDL_CreateWindow(SDL_WINDOW_NAME, 1280, 720, 
@@ -28,6 +29,8 @@ int main() {
       SDL_WINDOW_VULKAN
     #elif NASHI_USE_OPENGL
       SDL_WINDOW_OPENGL
+    #elif NASHI_USE_METAL
+      SDL_WINDOW_METAL
     #else
       0
     #endif
@@ -69,6 +72,13 @@ int main() {
 #elif NASHI_USE_OPENGL
   Nashi::OpenGLRenderer* openGLRenderer = new Nashi::OpenGLRenderer(window, event);
   openGLRenderer->init();
+
+#elif NASHI_USE_DIRECT3D12
+  HWND hwnd = (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+
+  Nashi::Direct3D12Renderer* direct3D12Renderer = new Nashi::Direct3D12Renderer(window, hwnd);
+
+  direct3D12Renderer->init();
 #endif
 
 
@@ -84,6 +94,8 @@ int main() {
           vkRenderer->m_windowResized = true;
 #elif NASHI_USE_OPENGL
           openGLRenderer->m_windowResized = true;
+#elif NASHI_USE_DIRECT3D12
+          direct3D12Renderer->m_windowResized = true;
 #endif
           break;
       }
@@ -92,6 +104,8 @@ int main() {
     vkRenderer->draw();
 #elif NASHI_USE_OPENGL
     openGLRenderer->draw();
+#elif NASHI_USE_DIRECT3D12
+    direct3D12Renderer->draw();
 #endif
 
   }
@@ -99,6 +113,8 @@ int main() {
   vkRenderer->cleanup();
 #elif NASHI_USE_OPENGL
   openGLRenderer->cleanup();
+#elif NASHI_USE_DIRECT3D12
+  direct3D12Renderer->cleanup();
 #endif
 
   SDL_DestroyWindow(window);

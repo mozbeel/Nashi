@@ -1,5 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.10)
 project(nashi)
+include(FetchContent)
 
 # Default to Debug if not specified (for single-config generators)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -35,12 +36,8 @@ source_group(TREE "${NASHI_ROOT}/src/shaders" PREFIX "Shaders" FILES ${SHADERS})
 source_group(TREE "${NASHI_ROOT}/src/headers" PREFIX "Headers" FILES ${HEADERS})
 
 # GLM dependency
-find_package(glm)
-if(NOT TARGET glm::glm)
-  include(FetchContent)
-  FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
-  FetchContent_MakeAvailable(glm)
-endif()
+FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
+FetchContent_MakeAvailable(glm)
 
 # Vulkan support on Windows
 set(GLAD_INCLUDE_PATH "")
@@ -58,13 +55,15 @@ if(WIN32)
   #   set(NASHI_USE_VULKAN OFF)
   # endif()
 
-  find_package(OpenGL REQUIRED)
-  add_library(glad STATIC
-    ${NASHI_ROOT}/vendor/glad/src/glad.c
-  )
-  set(NASHI_USE_OPENGL ON)
-  set(GLAD_INCLUDE_PATH "${NASHI_ROOT}/vendor/glad/include")
-  message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
+  # find_package(OpenGL REQUIRED)
+  # add_library(glad STATIC
+  #   ${NASHI_ROOT}/vendor/glad/src/glad.c
+  # )
+  # set(NASHI_USE_OPENGL ON)
+  # set(GLAD_INCLUDE_PATH "${NASHI_ROOT}/vendor/glad/include")
+  # message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
+  
+  set(NASHI_USE_DIRECT3D12 ON)
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config
@@ -158,7 +157,9 @@ elseif(NASHI_USE_OPENGL)
       "${CMAKE_CURRENT_BINARY_DIR}/shaders"
     COMMENT "Copying shaders directory"
   )
-    
+elseif(NASHI_USE_DIRECT3D12)
+  target_link_libraries(nashi PRIVATE glm::glm d3d12 dxgi dxguid d3dcompiler ${MIDDLEWARE})
+  target_compile_definitions(nashi PRIVATE NASHI_USE_DIRECT3D12)
 endif()
 
 # Optional: Strip binary on release builds for non-MSVC
