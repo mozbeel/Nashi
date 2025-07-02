@@ -1,6 +1,8 @@
 #ifndef NASHI_VR
 #   include <SDL3/SDL.h>
-#   include <SDL3/SDL_vulkan.h>
+#   ifdef NASHI_USE_VULKAN
+#       include <SDL3/SDL_vulkan.h>
+#   endif
 #endif
 
 #define GLM_FORCE_RADIANS

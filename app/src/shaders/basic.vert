@@ -1,15 +1,17 @@
-struct VSInput {
-    float3 pos : POSITION;
-    float3 col : COLOR;
-};
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float4 col : COLOR;
-};
+#version 450
 
-PSInput main(VSInput input) {
-    PSInput o;
-    o.pos = float4(input.pos, 1.0);
-    o.col = float4(input.col, 1.0);
-    return o;
+layout(binding = 0) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inColor;
+
+layout(location = 0) out vec3 fragColor;
+
+void main() {
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    fragColor = inColor;
 }
