@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cstdint>
+#include <queue>
 
 #include <renderer.hpp>
 
@@ -38,9 +40,12 @@ using Microsoft::WRL::ComPtr;
         }                                                             \
     } while (0)
 
+
+
 namespace Nashi {
 	class Direct3D12Renderer : IRenderer {
 		SDL_Window* m_window;
+		SDL_Event m_event;
 
 		HWND m_hwnd;
 		RECT m_windowRect;
@@ -66,7 +71,7 @@ namespace Nashi {
 		ComPtr<ID3D12Resource> m_dxBackBuffers[m_dxNumFrames];
 		UINT m_dxCurrentBackBufferIndex;
 		ComPtr<ID3D12CommandAllocator> m_dxCommandAllocators[m_dxNumFrames];
-		ComPtr<ID3D12GraphicsCommandList> m_dxCommandList[m_dxNumFrames];
+		ComPtr<ID3D12GraphicsCommandList> m_dxCommandLists[m_dxNumFrames];
 
 		ComPtr<ID3D12Fence> m_dxFence;
 		uint64_t m_dxFenceValue = 0;
@@ -81,6 +86,8 @@ namespace Nashi {
 		void createDevice();
 		void createCommandQueue();
 
+		void resizeWindow();
+
 		void checkTearingSupport();
 
 		void createSwapChain();
@@ -92,14 +99,14 @@ namespace Nashi {
 
 		void createSyncObjects();
 		void createEventHandle();
-		void signalFence();
+		uint64_t signalFence();
 		void waitForFenceValue(std::chrono::milliseconds duration = std::chrono::milliseconds::max());
 
 		void flush();
 
 	public:
 		bool m_windowResized = false;
-		Direct3D12Renderer(SDL_Window* window, HWND hwnd);
+		Direct3D12Renderer(SDL_Window* window, SDL_Event event, HWND hwnd);
 
 		void init();
 		void draw();

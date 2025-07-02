@@ -76,7 +76,7 @@ int main() {
 #elif NASHI_USE_DIRECT3D12
   HWND hwnd = (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 
-  Nashi::Direct3D12Renderer* direct3D12Renderer = new Nashi::Direct3D12Renderer(window, hwnd);
+  Nashi::Direct3D12Renderer* direct3D12Renderer = new Nashi::Direct3D12Renderer(window, event, hwnd);
 
   direct3D12Renderer->init();
 #endif

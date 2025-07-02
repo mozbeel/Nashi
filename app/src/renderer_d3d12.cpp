@@ -2,8 +2,9 @@
 #include <renderer_d3d12.hpp>
 
 namespace Nashi {
-	Direct3D12Renderer::Direct3D12Renderer(SDL_Window* window, HWND hwnd) {
+	Direct3D12Renderer::Direct3D12Renderer(SDL_Window* window, SDL_Event event, HWND hwnd) {
 		this->m_window = window;
+		this->m_event = event;
 		this->m_hwnd = hwnd;
 	}
 #ifdef _DEBUG
@@ -100,17 +101,6 @@ namespace Nashi {
 	}
 	
 	void Direct3D12Renderer::createSwapChain() {
-		for (int i = 0; i < m_dxNumFrames; ++i) {
-			m_dxBackBuffers[i].Reset();
-		}
-
-		m_dxRTVDescriptorHeap.Reset();
-		m_dxSwapChain.Reset();
-
-		UINT createFactoryFlags = 0;
-#ifdef _DEBUG
-		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
 		int width = 0, height = 0;
 		SDL_GetWindowSizeInPixels(m_window, &width, &height);
 		
@@ -172,9 +162,9 @@ namespace Nashi {
 
 	void Direct3D12Renderer::createCommandLists() {
 		for (int i = 0; i < m_dxNumFrames; ++i) {
-			CHECK_DX(m_dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_dxCommandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_dxCommandList[i])));
+			CHECK_DX(m_dxDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_dxCommandAllocators[i].Get(), nullptr, IID_PPV_ARGS(&m_dxCommandLists[i])));
 			
-			CHECK_DX(m_dxCommandList[i]->Close());
+			CHECK_DX(m_dxCommandLists[i]->Close());
 		}
 
 	}
@@ -188,9 +178,11 @@ namespace Nashi {
 		assert(m_dxFenceEvent && "Failed to create fence event");
 	}
 
-	void Direct3D12Renderer::signalFence() {
+	uint64_t Direct3D12Renderer::signalFence() {
 		uint64_t fenceValueForSignal = ++m_dxFenceValue;
 		CHECK_DX(m_dxCommandQueue->Signal(m_dxFence.Get(), fenceValueForSignal));
+
+		return fenceValueForSignal;
 	}
 
 	void Direct3D12Renderer::waitForFenceValue(std::chrono::milliseconds duration) {
@@ -204,6 +196,41 @@ namespace Nashi {
 		signalFence();
 		waitForFenceValue();
 	}
+
+	void Direct3D12Renderer::resizeWindow() {
+		flush();
+
+		for (int i = 0; i < m_dxNumFrames; ++i) {
+			m_dxBackBuffers[i].Reset();
+		}
+
+		m_dxRTVDescriptorHeap.Reset();
+
+		int width = 0, height = 0;
+		SDL_GetWindowSizeInPixels(m_window, &width, &height);
+
+		while (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED) {
+			SDL_WaitEvent(&m_event);
+		}
+
+		DXGI_SWAP_CHAIN_DESC swapChainDesc{};
+		CHECK_DX(m_dxSwapChain->GetDesc(&swapChainDesc));
+
+		CHECK_DX(m_dxSwapChain->ResizeBuffers(
+			m_dxNumFrames,
+			width,
+			height,
+			swapChainDesc.BufferDesc.Format,
+			swapChainDesc.Flags
+		));
+
+		m_dxCurrentBackBufferIndex = m_dxSwapChain->GetCurrentBackBufferIndex();
+
+		createDescriptorHeap();
+		updateRenderTargetViews();
+
+	}
+
 
 	void Direct3D12Renderer::init() {
 #ifdef _DEBUG
@@ -220,51 +247,74 @@ namespace Nashi {
 		
 		createCommandAllocators();
 		createCommandLists();
-
 		createSyncObjects();
 		createEventHandle();
 	}
 
 	void Direct3D12Renderer::draw() {
-		UINT frameIndex = m_dxSwapChain->GetCurrentBackBufferIndex();
+		if (m_windowResized) {
+			resizeWindow();
+			m_windowResized = false;
+		}
 
-		CHECK_DX(m_dxCommandAllocators[frameIndex]->Reset());
-		CHECK_DX(m_dxCommandList[frameIndex]->Reset(m_dxCommandAllocators[frameIndex].Get(), nullptr));
+		m_dxCurrentBackBufferIndex = m_dxSwapChain->GetCurrentBackBufferIndex();
 
-		// Define the render target
+		auto commandAllocator = m_dxCommandAllocators[m_dxCurrentBackBufferIndex];
+		auto backBuffer = m_dxBackBuffers[m_dxCurrentBackBufferIndex];
+		auto commandList = m_dxCommandLists[m_dxCurrentBackBufferIndex];
+		commandAllocator->Reset();
+		commandList->Reset(commandAllocator.Get(), nullptr);
+
+
+		{
+			D3D12_RESOURCE_BARRIER barrier{};
+			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier.Transition.pResource = backBuffer.Get();
+			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			commandList->ResourceBarrier(1, &barrier);
+
+		}
+		
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_dxRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-		rtvHandle.ptr += frameIndex * m_dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		UINT rtvDescriptorSize = m_dxDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		rtvHandle.ptr += m_dxCurrentBackBufferIndex * rtvDescriptorSize;
 
-		// Transition to RENDER_TARGET
-		D3D12_RESOURCE_BARRIER barrier{};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = m_dxBackBuffers[frameIndex].Get();
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		FLOAT clearColor[] = { 129.0f / 255.0f, 186.0f / 255.0f, 219.0f / 255.0f, 1.0f };
+		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-		m_dxCommandList[frameIndex]->ResourceBarrier(1, &barrier);
+		{
+			D3D12_RESOURCE_BARRIER barrier{};
+			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier.Transition.pResource = backBuffer.Get();
+			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			commandList->ResourceBarrier(1, &barrier);
+		}
 
-		// Clear
-		const float clearColor[] = { 129.0f / 255.0f, 186.0f / 255.0f, 219.0f / 255.0f, 1.0f };
-		m_dxCommandList[frameIndex]->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		CHECK_DX(commandList->Close());
 
-		// Transition back to PRESENT
-		std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
-		m_dxCommandList[frameIndex]->ResourceBarrier(1, &barrier);
+		ID3D12CommandList* const commandLists[] = {
+			commandList.Get()
+		};
 
-		// Close and execute
-		CHECK_DX(m_dxCommandList[frameIndex]->Close());
-		ID3D12CommandList* cmdLists[] = { m_dxCommandList[frameIndex].Get() };
-		m_dxCommandQueue->ExecuteCommandLists(1, cmdLists);
+		m_dxCommandQueue->ExecuteCommandLists(std::size(commandLists), commandLists);
 
-		// Present
-		CHECK_DX(m_dxSwapChain->Present(m_dxVsync ? 1 : 0, m_dxTearingSupported ? DXGI_PRESENT_ALLOW_TEARING : 0));
+		UINT syncInternal = m_dxVsync ? 1 : 0;
+		UINT presentFlags = m_dxTearingSupported && !m_dxVsync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+		CHECK_DX(m_dxSwapChain->Present(syncInternal, presentFlags));
 
-		flush();
+		m_dxFrameFenceValues[m_dxCurrentBackBufferIndex] = signalFence();
+		waitForFenceValue();
+
 	}
 
-	void Direct3D12Renderer::cleanup() {}
+	void Direct3D12Renderer::cleanup() {
+		flush();
+	}
 }
 #endif
