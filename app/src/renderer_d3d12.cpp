@@ -1,4 +1,4 @@
-#ifdef NASHI_USE_DIRECT3D12
+﻿#ifdef NASHI_USE_DIRECT3D12
 #include <renderer_d3d12.hpp>
 
 namespace Nashi {
@@ -10,11 +10,17 @@ namespace Nashi {
 #ifdef _DEBUG
 	void Direct3D12Renderer::enableDebugLayer() {
 		ComPtr<ID3D12Debug> debugInterface;
-		CHECK_DX(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
-		debugInterface->EnableDebugLayer();
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)))) {
+			debugInterface->EnableDebugLayer();
+			OutputDebugStringA("D3D12 Debug Layer ENABLED\n");
+		}
+		else {
+			OutputDebugStringA("WARNING: Could not enable D3D12 Debug Layer!\n");
+		}
 		
 	}
 #endif
+
 	void Direct3D12Renderer::createFactory() {
 		ComPtr<IDXGIFactory4> dxFactory4;
 		UINT createFactoryFlags = 0;
@@ -55,7 +61,7 @@ namespace Nashi {
 		if (SUCCEEDED(m_dxDevice.As(&infoQueue))) {
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+			infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, FALSE);
 
 			D3D12_MESSAGE_SEVERITY severities[] = {
 				D3D12_MESSAGE_SEVERITY_INFO
@@ -73,7 +79,7 @@ namespace Nashi {
 			newFilter.DenyList.NumIDs = std::size(denyIds);
 			newFilter.DenyList.pIDList = denyIds;
 
-			CHECK_DX(infoQueue->PushStorageFilter(&newFilter));
+			CHECK_DX(infoQueue->AddStorageFilterEntries(&newFilter));
 		}
 #endif
 	}
@@ -101,12 +107,11 @@ namespace Nashi {
 	}
 	
 	void Direct3D12Renderer::createSwapChain() {
-		int width = 0, height = 0;
-		SDL_GetWindowSizeInPixels(m_window, &width, &height);
+		SDL_GetWindowSizeInPixels(m_window, &m_windowWidth, &m_windowHeight);
 		
 		DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
-		swapChainDesc.Width = width;
-		swapChainDesc.Height = height;
+		swapChainDesc.Width = m_windowWidth;
+		swapChainDesc.Height = m_windowHeight;
 		swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		swapChainDesc.Stereo = false;
 		swapChainDesc.SampleDesc = { 1, 0 };
@@ -124,6 +129,8 @@ namespace Nashi {
 		CHECK_DX(m_dxFactory5->MakeWindowAssociation(m_hwnd, DXGI_MWA_NO_ALT_ENTER));
 
 		CHECK_DX(swapChain1.As(&m_dxSwapChain));
+
+		m_dxCurrentBackBufferIndex = m_dxSwapChain->GetCurrentBackBufferIndex();
 
 		createDescriptorHeap();
 		updateRenderTargetViews();
@@ -206,8 +213,7 @@ namespace Nashi {
 
 		m_dxRTVDescriptorHeap.Reset();
 
-		int width = 0, height = 0;
-		SDL_GetWindowSizeInPixels(m_window, &width, &height);
+		SDL_GetWindowSizeInPixels(m_window, &m_windowWidth, &m_windowHeight);
 
 		while (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED) {
 			SDL_WaitEvent(&m_event);
@@ -218,8 +224,8 @@ namespace Nashi {
 
 		CHECK_DX(m_dxSwapChain->ResizeBuffers(
 			m_dxNumFrames,
-			width,
-			height,
+			m_windowWidth,
+			m_windowHeight,
 			swapChainDesc.BufferDesc.Format,
 			swapChainDesc.Flags
 		));
@@ -228,7 +234,139 @@ namespace Nashi {
 
 		createDescriptorHeap();
 		updateRenderTargetViews();
+		createViewport();
+	}
 
+	void Direct3D12Renderer::createVertexBuffer()
+	{
+		ComPtr<ID3D12Resource> vertexBufferUpload;
+		size_t bufferSize = sizeof(vertices[0]) * vertices.size();
+
+
+		// Create default heap (GPU local)
+		const CD3DX12_HEAP_PROPERTIES defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
+		const auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+		CHECK_DX(m_dxDevice->CreateCommittedResource(
+			&defaultHeapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_COMMON,
+			nullptr,
+			IID_PPV_ARGS(&m_dxVertexBuffer)));
+
+		// Create upload heap
+		const CD3DX12_HEAP_PROPERTIES uploadHeapProps{ D3D12_HEAP_TYPE_UPLOAD };
+		CHECK_DX(m_dxDevice->CreateCommittedResource(
+			&uploadHeapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&vertexBufferUpload)));
+
+		// Map and copy vertex data to upload heap
+		Vertex* data = nullptr;
+		CHECK_DX(vertexBufferUpload->Map(0, nullptr, reinterpret_cast<void**>(&data)));
+		std::ranges::copy(vertices, data);
+		vertexBufferUpload->Unmap(0, nullptr);
+
+		// Reset command allocator and command list for current back buffer
+		CHECK_DX(m_dxCommandAllocators[m_dxCurrentBackBufferIndex]->Reset());
+		CHECK_DX(m_dxCommandLists[m_dxCurrentBackBufferIndex]->Reset(
+			m_dxCommandAllocators[m_dxCurrentBackBufferIndex].Get(),
+			nullptr));
+
+		// Transition from COMMON to COPY_DEST before copy
+		const auto barrierBeforeCopy = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_dxVertexBuffer.Get(),
+			D3D12_RESOURCE_STATE_COMMON,
+			D3D12_RESOURCE_STATE_COPY_DEST);
+		m_dxCommandLists[m_dxCurrentBackBufferIndex]->ResourceBarrier(1, &barrierBeforeCopy);
+
+		// Copy data from upload heap to default heap
+		m_dxCommandLists[m_dxCurrentBackBufferIndex]->CopyResource(m_dxVertexBuffer.Get(), vertexBufferUpload.Get());
+
+		// Transition vertex buffer to VERTEX_AND_CONSTANT_BUFFER for use in IA stage
+		const auto barrierAfterCopy = CD3DX12_RESOURCE_BARRIER::Transition(
+			m_dxVertexBuffer.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		m_dxCommandLists[m_dxCurrentBackBufferIndex]->ResourceBarrier(1, &barrierAfterCopy);
+
+		CHECK_DX(m_dxCommandLists[m_dxCurrentBackBufferIndex]->Close());
+
+		// Execute command list to perform copy and transition
+		ID3D12CommandList* const commandLists[] = { m_dxCommandLists[m_dxCurrentBackBufferIndex].Get() };
+		m_dxCommandQueue->ExecuteCommandLists((UINT)std::size(commandLists), commandLists);
+
+		// Wait for GPU to finish copying
+		m_dxFrameFenceValues[m_dxCurrentBackBufferIndex] = signalFence();
+		waitForFenceValue();
+
+		// Setup vertex buffer view for IA stage
+		m_dxVertexBufferView.BufferLocation = m_dxVertexBuffer->GetGPUVirtualAddress();
+		m_dxVertexBufferView.SizeInBytes = static_cast<UINT>(bufferSize);
+		m_dxVertexBufferView.StrideInBytes = sizeof(Vertex);
+	}
+
+	void Direct3D12Renderer::createRootSignature() {
+		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+		ComPtr<ID3DBlob> signatureBlob;
+		ComPtr<ID3DBlob> errorBlob;
+		if (const auto hr = D3D12SerializeRootSignature(
+			&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
+			&signatureBlob, &errorBlob
+		); FAILED(hr)) {
+			if (errorBlob) {
+				throw std::runtime_error("Creating root signature went wrong");
+			}
+			CHECK_DX(hr);
+		}
+		CHECK_DX(m_dxDevice->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_dxRootSignature)));
+
+
+	}
+
+	void Direct3D12Renderer::createGraphicsPipeline() {
+		const D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+
+		};
+
+		ComPtr<ID3DBlob> vertexShaderBlob;
+		CHECK_DX(D3DReadFileToBlob(L"shaders/basic.vert.cso", &vertexShaderBlob));
+
+		ComPtr<ID3DBlob> pixelShaderBlob;
+		CHECK_DX(D3DReadFileToBlob(L"shaders/basic.frag.cso", &pixelShaderBlob));
+
+		m_dxPipelineStateStream.RootSignature = m_dxRootSignature.Get();
+		m_dxPipelineStateStream.InputLayout = { inputLayout, (UINT)std::size(inputLayout) };
+		m_dxPipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		m_dxPipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+		m_dxPipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
+		m_dxPipelineStateStream.RTVFormats = {
+			.RTFormats{ DXGI_FORMAT_B8G8R8A8_UNORM  },
+			.NumRenderTargets = 1,
+		};
+
+		const D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
+			sizeof(PipelineStateStream), &m_dxPipelineStateStream
+		};
+
+		CHECK_DX(m_dxDevice->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_dxPipelineState)));
+	}
+
+	void Direct3D12Renderer::createViewport() {
+		const CD3DX12_RECT scissorRect{ 0, 0, LONG_MAX, LONG_MAX };
+		m_dxScissorRect = scissorRect;
+
+
+		const CD3DX12_VIEWPORT viewport{ 0.0f, 0.0f, float(m_windowWidth), float(m_windowHeight) };
+		m_dxViewport = viewport;
 	}
 
 
@@ -244,11 +382,19 @@ namespace Nashi {
 
 		checkTearingSupport();
 		createSwapChain();
+
 		
 		createCommandAllocators();
 		createCommandLists();
 		createSyncObjects();
 		createEventHandle();
+
+		createVertexBuffer();
+
+		createRootSignature();
+		createGraphicsPipeline();
+
+		createViewport();
 	}
 
 	void Direct3D12Renderer::draw() {
@@ -267,13 +413,9 @@ namespace Nashi {
 
 
 		{
-			D3D12_RESOURCE_BARRIER barrier{};
-			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			barrier.Transition.pResource = backBuffer.Get();
-			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				backBuffer.Get(),
+				D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 			commandList->ResourceBarrier(1, &barrier);
 
 		}
@@ -285,14 +427,23 @@ namespace Nashi {
 		FLOAT clearColor[] = { 129.0f / 255.0f, 186.0f / 255.0f, 219.0f / 255.0f, 1.0f };
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+		commandList->SetPipelineState(m_dxPipelineState.Get());
+		commandList->SetGraphicsRootSignature(m_dxRootSignature.Get());
+
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		commandList->IASetVertexBuffers(0, 1, &m_dxVertexBufferView);
+
+		commandList->RSSetScissorRects(1, &m_dxScissorRect);
+		commandList->RSSetViewports(1, &m_dxViewport);
+
+		commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
+
+		commandList->DrawInstanced((UINT)vertices.size(), 1, 0, 0);
+
 		{
-			D3D12_RESOURCE_BARRIER barrier{};
-			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-			barrier.Transition.pResource = backBuffer.Get();
-			barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-			barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+				backBuffer.Get(),
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 			commandList->ResourceBarrier(1, &barrier);
 		}
 

@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(NASHI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/app")
 set(NASHI_USE_VULKAN OFF)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
@@ -64,6 +64,7 @@ if(WIN32)
   # message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
   
   set(NASHI_USE_DIRECT3D12 ON)
+  set(DXC_PATH dxc)
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config
@@ -159,7 +160,48 @@ elseif(NASHI_USE_OPENGL)
   )
 elseif(NASHI_USE_DIRECT3D12)
   target_link_libraries(nashi PRIVATE glm::glm d3d12 dxgi dxguid d3dcompiler ${MIDDLEWARE})
+  target_include_directories(nashi PRIVATE ${NASHI_ROOT}/vendor/directx)
   target_compile_definitions(nashi PRIVATE NASHI_USE_DIRECT3D12)
+
+  set(CSO_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+  file(GLOB  PIXEL_SHADERS "${NASHI_ROOT}/src/shaders/*.frag")
+  file(GLOB  VERTEX_SHADERS "${NASHI_ROOT}/src/shaders/*.vert")
+
+  foreach(PIXEL_SHADER ${PIXEL_SHADERS})
+    get_filename_component(FILE_NAME ${PIXEL_SHADER} NAME)
+    set(CSO_FILE "${CSO_DIR}/${FILE_NAME}.cso")
+    add_custom_command(
+      OUTPUT ${CSO_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CSO_DIR}
+      COMMAND ${DXC_PATH} -T ps_6_0 -E main -Fo ${CSO_FILE} ${PIXEL_SHADER}
+      DEPENDS ${PIXEL_SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to CSO"
+      VERBATIM
+    )
+    list(APPEND CSO_SHADERS ${CSO_FILE})
+  endforeach()
+
+  foreach(VERTEX_SHADER ${VERTEX_SHADERS})
+    get_filename_component(FILE_NAME ${VERTEX_SHADER} NAME)
+    set(CSO_FILE "${CSO_DIR}/${FILE_NAME}.cso")
+    add_custom_command(
+      OUTPUT ${CSO_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${CSO_DIR}
+      COMMAND ${DXC_PATH} -T vs_6_0 -E main -Fo ${CSO_FILE} ${VERTEX_SHADER}
+      DEPENDS ${VERTEX_SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to CSO"
+      VERBATIM
+    )
+    list(APPEND CSO_SHADERS ${CSO_FILE})
+  endforeach()
+
+  add_custom_target(shaders ALL DEPENDS ${CSO_SHADERS})
+  add_dependencies(nashi shaders)
+
+  add_custom_command(TARGET nashi POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -DSRC="${CSO_DIR}" -DDEST="$<TARGET_FILE_DIR:nashi>" -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
+    COMMENT "Copying compiled CSO shaders to binary directory"
+  )
 endif()
 
 # Optional: Strip binary on release builds for non-MSVC
