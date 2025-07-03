@@ -1,1 +1,0 @@
-start builds/windows/nashi.sln

@@ -39,23 +39,23 @@ source_group(TREE "${NASHI_ROOT}/src/headers" PREFIX "Headers" FILES ${HEADERS})
 FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
 FetchContent_MakeAvailable(glm)
 
-# Vulkan support on Windows
-set(GLSLC_PATH "$ENV{VULKAN_SDK}/Bin/glslc.exe")
 set(SPIRV_CROSS_PATH spirv-cross)
+set(DXC_PATH "C:/VulkanSDK/1.3.296.0/Bin/dxc")
+
 set(GLAD_INCLUDE_PATH "")
 if(WIN32)
-  # find_package(Vulkan)
-  # if(Vulkan_FOUND)
-  #   message(STATUS "Vulkan headers & loader found.")
-  #   set(NASHI_USE_VULKAN ON)
-  #   set(GLSLC_PATH "$ENV{VULKAN_SDK}/Bin/glslc.exe")
-  #   if(NOT EXISTS ${GLSLC_PATH})
-  #     message(FATAL_ERROR "glslc.exe not found at ${GLSLC_PATH}. Please check Vulkan SDK installation.")
-  #   endif()
-  # else()
-  #   message(WARNING "Vulkan loader NOT found. Disabling Vulkan support.")
-  #   set(NASHI_USE_VULKAN OFF)
-  # endif()
+  find_package(Vulkan)
+  if(Vulkan_FOUND)
+    message(STATUS "Vulkan headers & loader found.")
+    set(NASHI_USE_VULKAN ON)
+    set(GLSLC_PATH "$ENV{VULKAN_SDK}/Bin/glslc.exe")
+    if(NOT EXISTS ${GLSLC_PATH})
+      message(FATAL_ERROR "glslc.exe not found at ${GLSLC_PATH}. Please check Vulkan SDK installation.")
+    endif()
+  else()
+    message(WARNING "Vulkan loader NOT found. Disabling Vulkan support.")
+    set(NASHI_USE_VULKAN OFF)
+  endif()
 
 
   # find_package(OpenGL REQUIRED)
@@ -66,8 +66,7 @@ if(WIN32)
   # set(GLAD_INCLUDE_PATH "${NASHI_ROOT}/vendor/glad/include")
   # message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
   
-  set(NASHI_USE_DIRECT3D12 ON)
-  set(DXC_PATH dxc)
+  # set(NASHI_USE_DIRECT3D12 ON)
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config
@@ -91,15 +90,15 @@ if(CMAKE_CONFIGURATION_TYPES)
     set_property(TARGET nashi PROPERTY
       WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
     )
-  endif()
-
-else()
-  # Single-config generators (Makefile, Ninja)
-  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    endif()
+    
+    else()
+    # Single-config generators (Makefile, Ninja)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(nashi PRIVATE NASHI_RELEASE_BUILD)
     target_compile_options(nashi PRIVATE ${RELEASE_COMPILE_FLAGS})
     target_link_options(nashi PRIVATE ${RELEASE_LINK_FLAGS})
-
+    
     if(WIN32)
       set_target_properties(nashi PROPERTIES
         LINK_FLAGS "/ENTRY:mainCRTStartup"
@@ -117,48 +116,104 @@ if(NOT NASHI_VR)
   set(MIDDLEWARE SDL3::SDL3)
 endif()
 
-
-function(compile_shaders)
-  cmake_parse_arguments(SHADER_ARGS "" "TARGET;OUTPUT_DIR;GLSLC" "SHADERS" ${ARGN})
-
-  set(SPIRV_SHADERS "")
-  foreach(SHADER ${SHADER_ARGS_SHADERS})
-    get_filename_component(FILE_NAME ${SHADER} NAME_WE)
-    set(SPIRV_FILE "${SHADER_ARGS_OUTPUT_DIR}/${FILE_NAME}.spv")
-
-    add_custom_command(
-      OUTPUT ${SPIRV_FILE}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_ARGS_OUTPUT_DIR}
-      COMMAND ${GLSLC_PATH} -o ${SPIRV_FILE} ${SHADER}
-      DEPENDS ${SHADER}
-      COMMENT "Compiling shader ${FILE_NAME} to SPIR-V"
-      VERBATIM
-    )
-    list(APPEND SPIRV_SHADERS ${SPIRV_FILE})
-  endforeach()
-
-  add_custom_target(${SHADER_ARGS_TARGET}_shaders ALL DEPENDS ${SPIRV_SHADERS})
-  add_dependencies(${SHADER_ARGS_TARGET} ${SHADER_ARGS_TARGET}_shaders)
-endfunction()
-
-
+set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 # Link libraries and handle shaders
 if(NASHI_USE_VULKAN)
   target_link_libraries(nashi PRIVATE Vulkan::Vulkan glm::glm ${MIDDLEWARE})
   target_compile_definitions(nashi PRIVATE NASHI_USE_VULKAN)
 
-  set(SPIRV_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders") 
+  foreach(SHADER ${SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    get_filename_component(FILE_EXT ${SHADER} EXT)
 
-  compile_shaders(
-    TARGET nashi
-    OUTPUT_DIR "${SPIRV_DIR}"
-    GLSLC "${GLSLC_PATH}"
-    SHADERS ${SHADERS}
-  )
+    set(SPIRV_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME}.spv")
+    set(SHADER_STAGE "")
+
+    if(FILE_EXT STREQUAL ".vert")
+        set(SHADER_STAGE "vs_6_0")
+    elseif(FILE_EXT STREQUAL ".frag")
+        set(SHADER_STAGE "ps_6_0")
+    elseif(FILE_EXT STREQUAL ".comp")
+        set(SHADER_STAGE "cs_6_0")
+    else()
+        message(FATAL_ERROR "Unknown shader extension: ${FILE_EXT}")
+    endif()
+    
+    add_custom_command(
+      OUTPUT ${SPIRV_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
+      COMMAND ${DXC_PATH} -T ${SHADER_STAGE} -E main -spirv -Fo ${SPIRV_FILE} ${SHADER}
+      DEPENDS ${SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to SPV"
+      VERBATIM
+    )
+    list(APPEND SPIRV_SHADERS ${SPIRV_FILE})
+  endforeach()
+  
+  add_custom_target(nashi_shaders ALL DEPENDS ${SPIRV_SHADERS})
 
   add_custom_command(TARGET nashi POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -DSRC="${SPIRV_DIR}" -DDEST="$<TARGET_FILE_DIR:nashi>" -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
+    COMMAND ${CMAKE_COMMAND} -DSRC="${SHADER_OUTPUT_DIR}" -DDEST="$<TARGET_FILE_DIR:nashi>" -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
     COMMENT "Copying compiled SPIR-V shaders to binary directory"
+  )
+
+elseif(NASHI_USE_OPENGL)
+  target_link_libraries(nashi PRIVATE glad glm::glm OpenGL::GL ${MIDDLEWARE})
+  target_include_directories(glad PUBLIC ${GLAD_INCLUDE_PATH})
+  target_compile_definitions(nashi PRIVATE NASHI_USE_OPENGL)
+
+  foreach(SHADER ${SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    get_filename_component(FILE_EXT ${SHADER} EXT)
+
+    set(SPIRV_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME}.spv")
+    set(SHADER_STAGE "")
+
+    if(FILE_EXT STREQUAL ".vert")
+        set(SHADER_STAGE "vs_6_0")
+    elseif(FILE_EXT STREQUAL ".frag")
+        set(SHADER_STAGE "ps_6_0")
+    elseif(FILE_EXT STREQUAL ".comp")
+        set(SHADER_STAGE "cs_6_0")
+    else()
+        message(FATAL_ERROR "Unknown shader extension: ${FILE_EXT}")
+    endif()
+    
+    add_custom_command(
+      OUTPUT ${SPIRV_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
+      COMMAND ${DXC_PATH} -T ${SHADER_STAGE} -E main -spirv -Fo ${SPIRV_FILE} ${SHADER}
+      DEPENDS ${SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to SPV"
+      VERBATIM
+    )
+    list(APPEND SPIRV_SHADERS ${SPIRV_FILE})
+  endforeach()
+
+  foreach(SPIRV_SHADER ${SPIRV_SHADERS})
+    get_filename_component(FILE_NAME ${SPIRV_SHADER} NAME)
+    string(REGEX REPLACE "\\.spv$" "" FILE_NAME_NO_SPV ${FILE_NAME})
+    set(GLSL_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME_NO_SPV}.glsl")
+
+    add_custom_command(
+      OUTPUT ${GLSL_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
+      COMMAND ${SPIRV_CROSS_PATH} --version 450 --output ${GLSL_FILE} ${SPIRV_SHADER}
+      DEPENDS ${SPIRV_SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to SPV"
+      VERBATIM
+    )
+    list(APPEND GLSL_SHADERS ${GLSL_FILE})
+  endforeach()
+
+  add_custom_target(nasi_shaders ALL DEPENDS ${GLSL_SHADERS})
+
+  add_custom_command(TARGET nashi POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+            -DSRC="${SHADER_OUTPUT_DIR}"
+            -DDEST="$<TARGET_FILE_DIR:nashi>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
+    COMMENT "Copying compiled CSO shaders to binary directory"
   )
 
 elseif(NASHI_USE_DIRECT3D12)
@@ -167,106 +222,41 @@ elseif(NASHI_USE_DIRECT3D12)
   target_include_directories(nashi PRIVATE ${NASHI_ROOT}/vendor/directx)
   target_compile_definitions(nashi PRIVATE NASHI_USE_DIRECT3D12)
 
-  # 1) Define your output dirs
-  set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
-  set(SPIRV_DIR   "${SHADER_OUTPUT_DIR}")
-  set(HLSL_DIR    "${SHADER_OUTPUT_DIR}")
-  set(CSO_DIR     "${SHADER_OUTPUT_DIR}")
-  file(MAKE_DIRECTORY ${SPIRV_DIR} ${HLSL_DIR} ${CSO_DIR})
 
-  # 2) GLSL → SPIR‑V
-  set(SPIRV_FILES "")
-  foreach(src IN LISTS SHADERS)
-    get_filename_component(fn ${src} NAME)
-    set(spv "${SPIRV_DIR}/${fn}.spv")
-    add_custom_command(
-      OUTPUT ${spv}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${SPIRV_DIR}
-      COMMAND ${GLSLC_PATH} -c ${src} -o ${spv}
-      DEPENDS ${src}
-      COMMENT "GLSL → SPIR‑V: ${fn}"
-      VERBATIM
-    )
-    list(APPEND SPIRV_FILES ${spv})
-  endforeach()
-  add_custom_target(compile_spv ALL DEPENDS ${SPIRV_FILES})
-  add_dependencies(nashi compile_spv)
+  foreach(SHADER ${SHADERS})
+    get_filename_component(FILE_NAME ${SHADER} NAME)
+    get_filename_component(FILE_EXT ${SHADER} EXT)
 
-  # 3) SPIR‑V → HLSL
-  set(HLSL_VS "")
-  set(HLSL_PS "")
-  foreach(spv IN LISTS SPIRV_FILES)
-    get_filename_component(fn ${spv} NAME)
-    set(hlsl "${HLSL_DIR}/${fn}.hlsl")
-    add_custom_command(
-      OUTPUT ${hlsl}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${HLSL_DIR}
-      COMMAND ${SPIRV_CROSS_PATH} ${spv} --hlsl --shader-model 60 --output ${hlsl} 
-      DEPENDS ${spv}
-      COMMENT "SPIR‑V → HLSL: ${fn}"
-      VERBATIM
-    )
-    if(fn MATCHES "\\.vert\\.spv$")
-      list(APPEND HLSL_VS ${hlsl})
+    set(CSO_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME}.cso")
+    set(SHADER_STAGE "")
+
+    if(FILE_EXT STREQUAL ".vert")
+        set(SHADER_STAGE "vs_6_0")
+    elseif(FILE_EXT STREQUAL ".frag")
+        set(SHADER_STAGE "ps_6_0")
+    elseif(FILE_EXT STREQUAL ".comp")
+        set(SHADER_STAGE "cs_6_0")
     else()
-      list(APPEND HLSL_PS ${hlsl})
+        message(FATAL_ERROR "Unknown shader extension: ${FILE_EXT}")
     endif()
-  endforeach()
-  add_custom_target(spirv_to_hlsl ALL DEPENDS ${HLSL_VS} ${HLSL_PS})
-  add_dependencies(nashi spirv_to_hlsl)
-
-  # 4) HLSL → CSO
-# Vertex shaders → vs_6_0
-  foreach(hlsl IN LISTS HLSL_VS)
-    # hlsl might be ".../basic.vert.spv.hlsl"
-    get_filename_component(fn_full ${hlsl} NAME)      # fn_full="basic.vert.spv.hlsl"
-
-    # remove the trailing ".spv.hlsl"
-    string(REGEX REPLACE "\\.spv\\.hlsl$" "" fn_base ${fn_full})
-    # fn_base="basic.vert"
-
-    set(cso "${CSO_DIR}/${fn_base}.cso")
-
+    
     add_custom_command(
-      OUTPUT ${cso}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${CSO_DIR}
-      COMMAND ${DXC_PATH} -T vs_6_0 -E main -Fo ${cso} ${hlsl}
-      DEPENDS ${hlsl}
-      COMMENT "HLSL → CSO (vs): ${fn_base}"
+      OUTPUT ${CSO_FILE}
+      COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_DIR}
+      COMMAND ${DXC_PATH} -T ${SHADER_STAGE} -E main -Fo ${CSO_FILE} ${SHADER}
+      DEPENDS ${SHADER}
+      COMMENT "Compiling shader ${FILE_NAME} to CSO"
       VERBATIM
     )
-    list(APPEND CSO_FILES ${cso})
+    list(APPEND CSO_SHADERS ${CSO_FILE})
   endforeach()
-
-  # Pixel shaders → ps_6_0
-  foreach(hlsl IN LISTS HLSL_PS)
-    # hlsl might be ".../basic.frag.spv.hlsl"
-    get_filename_component(fn_full ${hlsl} NAME)      # fn_full="basic.frag.spv.hlsl"
-
-    # remove the trailing ".spv.hlsl"
-    string(REGEX REPLACE "\\.spv\\.hlsl$" "" fn_base ${fn_full})
-    # fn_base="basic.frag"
-
-    set(cso "${CSO_DIR}/${fn_base}.cso")
-
-    add_custom_command(
-      OUTPUT ${cso}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${CSO_DIR}
-      COMMAND ${DXC_PATH} -T ps_6_0 -E main -Fo ${cso} ${hlsl}
-      DEPENDS ${hlsl}
-      COMMENT "HLSL → CSO (ps): ${fn_base}"
-      VERBATIM
-    )
-    list(APPEND CSO_FILES ${cso})
-  endforeach()
-
-  add_custom_target(hlsl_to_cso ALL DEPENDS ${CSO_FILES})
-  add_dependencies(nashi hlsl_to_cso)
+  
+  add_custom_target(nashi_shaders ALL DEPENDS ${CSO_SHADERS})
   
   # 5) copy final .cso’s alongside your exe
   add_custom_command(TARGET nashi POST_BUILD
     COMMAND ${CMAKE_COMMAND}
-            -DSRC="${CSO_DIR}"
+            -DSRC="${SHADER_OUTPUT_DIR}"
             -DDEST="$<TARGET_FILE_DIR:nashi>"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
     COMMENT "Copying compiled CSO shaders to binary directory"

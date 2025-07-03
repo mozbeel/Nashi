@@ -109,8 +109,8 @@ namespace Nashi {
 
 		glEnable(GL_DEPTH_TEST);
 	
-		std::filesystem::path vertShaderPath = std::filesystem::current_path() / "shaders" / "basic.vert";
-		std::filesystem::path fragShaderPath = std::filesystem::current_path() / "shaders" / "basic.frag";
+		std::filesystem::path vertShaderPath = std::filesystem::current_path() / "shaders" / "basic.vert.glsl";
+		std::filesystem::path fragShaderPath = std::filesystem::current_path() / "shaders" / "basic.frag.glsl";
 		m_glVertexShader = createShader(GL_VERTEX_SHADER, vertShaderPath.string());
 		m_glFragmentShader = createShader(GL_FRAGMENT_SHADER, fragShaderPath.string());
 

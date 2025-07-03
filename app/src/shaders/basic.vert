@@ -1,15 +1,30 @@
-struct VSInput {
+struct VSInput
+{
     float3 pos : POSITION;
     float3 col : COLOR;
 };
-struct PSInput {
+
+struct PSInput
+{
     float4 pos : SV_POSITION;
-    float4 col : COLOR;
+    float3 col : COLOR;
 };
 
-PSInput main(VSInput input) {
+cbuffer UniformBufferObject : register(b0)
+{
+    matrix model;
+    matrix view;
+    matrix proj;
+};
+
+PSInput main(VSInput input)
+{
     PSInput o;
-    o.pos = float4(input.pos, 1.0);
-    o.col = float4(input.col, 1.0);
+
+    float4 worldPos = mul(model, float4(input.pos, 1.0));
+    float4 viewPos = mul(view, worldPos);
+    o.pos = mul(proj, viewPos);
+
+    o.col = input.col;
     return o;
 }

@@ -5,9 +5,11 @@
 #   endif
 #endif
 
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#ifndef NASHI_USE_DIRECT3D12
+#   define GLM_FORCE_RADIANS
+#   include <glm/glm.hpp>
+#   include <glm/gtc/matrix_transform.hpp>
+#endif
 
 #include <vector>
 #include <fstream>
@@ -59,11 +61,13 @@ static std::vector<char> readFileText(const std::string& filename) {
 }
 
 namespace Nashi {
+#ifndef NASHI_USE_DIRECT3D12
     struct UniformBufferObject {
         alignas(16) glm::mat4 model;
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 proj;
     };
+#endif
 
 	class IRenderer {
 	public:

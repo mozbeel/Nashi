@@ -237,11 +237,43 @@ namespace Nashi {
 		createViewport();
 	}
 
+	void Direct3D12Renderer::createStencilBuffer() {
+		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
+		dsvHeapDesc.NumDescriptors = 1;
+		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		
+		CHECK_DX(m_dxDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dxDepthStencilBufferHeap)));
+
+		D3D12_RESOURCE_DESC depthDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+			DXGI_FORMAT_D32_FLOAT, m_windowWidth, m_windowHeight, 1, 1
+		);
+		depthDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+		D3D12_CLEAR_VALUE depthClearValue{};
+		depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		depthClearValue.DepthStencil = { 1.0f, 0 };
+
+		auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		CHECK_DX(m_dxDevice->CreateCommittedResource(
+			&heapProps, D3D12_HEAP_FLAG_NONE, &depthDesc,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue,
+			IID_PPV_ARGS(&m_dxDepthStencilBuffer)
+		));
+
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+		m_dxDevice->CreateDepthStencilView(m_dxDepthStencilBuffer.Get(), &dsvDesc,
+			m_dxDepthStencilBufferHeap->GetCPUDescriptorHandleForHeapStart());
+	}
+
 	void Direct3D12Renderer::createVertexBuffer()
 	{
 		ComPtr<ID3D12Resource> vertexBufferUpload;
-		size_t bufferSize = sizeof(vertices[0]) * vertices.size();
-
+		size_t bufferSize = sizeof(m_vertices[0]) * sizeof(Vertex);
 
 		// Create default heap (GPU local)
 		const CD3DX12_HEAP_PROPERTIES defaultHeapProps{ D3D12_HEAP_TYPE_DEFAULT };
@@ -268,7 +300,7 @@ namespace Nashi {
 		// Map and copy vertex data to upload heap
 		Vertex* data = nullptr;
 		CHECK_DX(vertexBufferUpload->Map(0, nullptr, reinterpret_cast<void**>(&data)));
-		std::ranges::copy(vertices, data);
+		std::ranges::copy(m_vertices, data);
 		vertexBufferUpload->Unmap(0, nullptr);
 
 		// Reset command allocator and command list for current back buffer
@@ -310,9 +342,91 @@ namespace Nashi {
 		m_dxVertexBufferView.StrideInBytes = sizeof(Vertex);
 	}
 
+	void Direct3D12Renderer::createIndexBuffer() {
+		const UINT indexBufferSize = static_cast<UINT>(m_indices.size() * sizeof(uint16_t));
+
+		auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+
+		CHECK_DX(m_dxDevice->CreateCommittedResource(
+			&heapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&bufferDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_dxIndexBuffer)
+		));
+
+		uint16_t* indexData = nullptr;
+		CD3DX12_RANGE readRange{ 0, 0 };
+
+		CHECK_DX(m_dxIndexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&indexData)));
+		memcpy(indexData, m_indices.data(), indexBufferSize);
+		m_dxIndexBuffer->Unmap(0, nullptr);
+
+		m_dxIndexBufferView.BufferLocation = m_dxIndexBuffer->GetGPUVirtualAddress();
+		m_dxIndexBufferView.SizeInBytes = indexBufferSize;
+		m_dxIndexBufferView.Format = DXGI_FORMAT_R16_UINT;
+	}
+
+	void Direct3D12Renderer::createConstantBuffer() {
+		const UINT constantBufferSize = (sizeof(UniformBufferObject) + 255) & ~255;
+
+		auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+		CHECK_DX(m_dxDevice->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE,
+			&bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, 
+			nullptr, IID_PPV_ARGS(&m_dxConstantBuffer)));
+
+		CD3DX12_RANGE readRange{ 0, 0 };
+
+		CHECK_DX(m_dxConstantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_dxUbo)));
+
+		D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
+		heapDesc.NumDescriptors = 1;
+		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+		CHECK_DX(m_dxDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_dxConstantBufferHeap)));
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+		cbvDesc.BufferLocation = m_dxConstantBuffer->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = constantBufferSize;
+
+		m_dxDevice->CreateConstantBufferView(&cbvDesc, m_dxConstantBufferHeap->GetCPUDescriptorHandleForHeapStart());
+	}
+
+	void Direct3D12Renderer::updateUniformBufferObject() {
+		static auto startTime = std::chrono::high_resolution_clock::now();
+
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+		const auto modelMatrix = XMMatrixTranspose(XMMatrixRotationZ(time * XMConvertToRadians(45.0f)));
+
+		const auto eyePosition = XMVectorSet(2.0f, 2.0f, 2.0f, 1.0f);
+		const auto focusPosition = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+		const auto upDirection = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		const auto viewMatrix = XMMatrixLookAtLH(eyePosition, focusPosition, upDirection);
+
+		const auto aspectRatio = float(m_windowWidth) / float(m_windowHeight);
+		const auto projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), aspectRatio, 0.1f, 10.0f);
+
+		m_dxUbo->model = modelMatrix;
+		m_dxUbo->view = viewMatrix;
+		m_dxUbo->proj = projMatrix;
+	}
+
 	void Direct3D12Renderer::createRootSignature() {
+		CD3DX12_DESCRIPTOR_RANGE cbvRange;
+		cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+
+		CD3DX12_ROOT_PARAMETER rootParameters[1];
+		rootParameters[0].InitAsDescriptorTable(1, &cbvRange, D3D12_SHADER_VISIBILITY_VERTEX);
+
 		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		rootSignatureDesc.Init((UINT)std::size(rootParameters), rootParameters,
+			0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 		ComPtr<ID3DBlob> signatureBlob;
 		ComPtr<ID3DBlob> errorBlob;
@@ -326,7 +440,6 @@ namespace Nashi {
 			CHECK_DX(hr);
 		}
 		CHECK_DX(m_dxDevice->CreateRootSignature(0, signatureBlob->GetBufferPointer(), signatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_dxRootSignature)));
-
 
 	}
 
@@ -352,6 +465,22 @@ namespace Nashi {
 			.RTFormats{ DXGI_FORMAT_B8G8R8A8_UNORM  },
 			.NumRenderTargets = 1,
 		};
+		
+		CD3DX12_DEPTH_STENCIL_DESC depthStencilDesc(D3D12_DEFAULT);
+		depthStencilDesc.DepthEnable = TRUE;
+		depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+		depthStencilDesc.StencilEnable = FALSE;
+
+		m_dxPipelineStateStream.DepthStencilState = depthStencilDesc;
+		m_dxPipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+		CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
+		rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+		rasterizerDesc.FrontCounterClockwise = FALSE;
+		rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+		m_dxPipelineStateStream.RasterizerState = rasterizerDesc;
 
 		const D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
 			sizeof(PipelineStateStream), &m_dxPipelineStateStream
@@ -383,13 +512,15 @@ namespace Nashi {
 		checkTearingSupport();
 		createSwapChain();
 
-		
 		createCommandAllocators();
 		createCommandLists();
 		createSyncObjects();
 		createEventHandle();
 
+		createStencilBuffer();
 		createVertexBuffer();
+		createIndexBuffer();
+		createConstantBuffer();
 
 		createRootSignature();
 		createGraphicsPipeline();
@@ -432,13 +563,22 @@ namespace Nashi {
 
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		commandList->IASetVertexBuffers(0, 1, &m_dxVertexBufferView);
+		commandList->IASetIndexBuffer(&m_dxIndexBufferView);
 
 		commandList->RSSetScissorRects(1, &m_dxScissorRect);
 		commandList->RSSetViewports(1, &m_dxViewport);
 
-		commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, nullptr);
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_dxDepthStencilBufferHeap->GetCPUDescriptorHandleForHeapStart();
+		commandList->OMSetRenderTargets(1, &rtvHandle, TRUE, &dsvHandle);
+		commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		commandList->DrawInstanced((UINT)vertices.size(), 1, 0, 0);
+		ID3D12DescriptorHeap* descriptorHeaps[] = { m_dxConstantBufferHeap.Get() };
+		commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+		updateUniformBufferObject();
+
+		commandList->SetGraphicsRootDescriptorTable(0, m_dxConstantBufferHeap->GetGPUDescriptorHandleForHeapStart());
+
+		commandList->DrawIndexedInstanced((UINT)m_indices.size(), 1, 0, 0, 0);
 
 		{
 			const auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(

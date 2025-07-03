@@ -1,5 +1,6 @@
 #ifdef NASHI_USE_DIRECT3D12
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #include <wrl.h>
 
@@ -60,6 +61,14 @@ struct PipelineStateStream
 	CD3DX12_PIPELINE_STATE_STREAM_PS PS;
 	CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
 	CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
+	CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER RasterizerState;
+	CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL DepthStencilState;
+};
+
+struct UniformBufferObject {
+	XMMATRIX model;
+	XMMATRIX view;
+	XMMATRIX proj;
 };
 
 namespace Nashi {
@@ -100,13 +109,46 @@ namespace Nashi {
 		uint64_t m_dxFrameFenceValues[m_dxNumFrames] = {};
 		HANDLE m_dxFenceEvent;
 
-		ComPtr<ID3D12Resource> m_dxVertexBuffer;           // your GPU buffer
+		ComPtr<ID3D12DescriptorHeap> m_dxDepthStencilBufferHeap;
+		ComPtr<ID3D12Resource> m_dxDepthStencilBuffer;
+
+		ComPtr<ID3D12Resource> m_dxVertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_dxVertexBufferView;
 
-		const std::vector<Vertex> vertices = {
-			{ {  0.0f,  0.5f, 0.0f }, {1,0,0} },
-			{ {  0.5f, -0.5f, 0.0f }, {0,1,0} },
-			{ { -0.5f, -0.5f, 0.0f }, {0,0,1} },
+		ComPtr<ID3D12Resource> m_dxIndexBuffer;
+		D3D12_INDEX_BUFFER_VIEW m_dxIndexBufferView;
+
+		ComPtr<ID3D12Resource> m_dxConstantBuffer;
+		ComPtr<ID3D12DescriptorHeap> m_dxConstantBufferHeap; 
+		UniformBufferObject* m_dxUbo;
+
+		const std::vector<Vertex> m_vertices = {
+			// Front face
+			{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}}, // 0
+			{{ 0.5f, -0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}}, // 1
+			{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}, // 2
+			{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}}, // 3
+
+			// Back face
+			{{-0.5f, -0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}}, // 4
+			{{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}}, // 5
+			{{ 0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}}, // 6
+			{{-0.5f,  0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}}, // 7
+		};
+
+		const std::vector<uint16_t> m_indices = {
+			// Front face
+			0, 1, 2, 2, 3, 0,
+			// Right face
+			1, 5, 6, 6, 2, 1,
+			// Back face
+			5, 4, 7, 7, 6, 5,
+			// Left face
+			4, 0, 3, 3, 7, 4,
+			// Top face
+			3, 2, 6, 6, 7, 3,
+			// Bottom face
+			4, 5, 1, 1, 0, 4
 		};
 
 		ComPtr<ID3D12RootSignature> m_dxRootSignature;
@@ -115,7 +157,6 @@ namespace Nashi {
 
 		CD3DX12_RECT m_dxScissorRect;
 		CD3DX12_VIEWPORT m_dxViewport;
-
 
 #ifdef _DEBUG
 		void enableDebugLayer();
@@ -142,7 +183,12 @@ namespace Nashi {
 		void waitForFenceValue(std::chrono::milliseconds duration = std::chrono::milliseconds::max());
 		void flush();
 
+		void createStencilBuffer();
 		void createVertexBuffer();
+		void createIndexBuffer();
+
+		void createConstantBuffer();
+		void updateUniformBufferObject();
 
 		void createRootSignature();
 		void createGraphicsPipeline();
