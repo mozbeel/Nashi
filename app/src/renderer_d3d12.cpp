@@ -233,11 +233,12 @@ namespace Nashi {
 		m_dxCurrentBackBufferIndex = m_dxSwapChain->GetCurrentBackBufferIndex();
 
 		createDescriptorHeap();
+		createDepthStencilBuffer();
 		updateRenderTargetViews();
 		createViewport();
 	}
 
-	void Direct3D12Renderer::createStencilBuffer() {
+	void Direct3D12Renderer::createDepthStencilBuffer() {
 		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
 		dsvHeapDesc.NumDescriptors = 1;
 		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
@@ -517,7 +518,7 @@ namespace Nashi {
 		createSyncObjects();
 		createEventHandle();
 
-		createStencilBuffer();
+		createDepthStencilBuffer();
 		createVertexBuffer();
 		createIndexBuffer();
 		createConstantBuffer();

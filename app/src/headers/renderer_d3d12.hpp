@@ -183,7 +183,7 @@ namespace Nashi {
 		void waitForFenceValue(std::chrono::milliseconds duration = std::chrono::milliseconds::max());
 		void flush();
 
-		void createStencilBuffer();
+		void createDepthStencilBuffer();
 		void createVertexBuffer();
 		void createIndexBuffer();
 
