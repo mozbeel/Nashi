@@ -1,3 +1,6 @@
 builds/
 vendor/glad/include
 vendor/glad/src
+bin/dxc
+bin/dxv
+bin/dxv-3.7

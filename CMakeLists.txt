@@ -67,6 +67,7 @@ if(WIN32)
   # message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
   
   set(NASHI_USE_DIRECT3D12 ON)
+
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config

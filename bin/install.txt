@@ -1,0 +1,2 @@
+Install dxc from https://github.com/microsoft/DirectXShaderCompiler/releases,
+the 3.7 release is prefered
