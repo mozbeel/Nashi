@@ -5,7 +5,7 @@
 #   endif
 #endif
 
-#ifndef NASHI_USE_DIRECT3D12
+#if !defined(NASHI_USE_DIRECT3D12) && !defined(NASHI_USE_METAL)
 #   define GLM_FORCE_RADIANS
 #   include <glm/glm.hpp>
 #   include <glm/gtc/matrix_transform.hpp>
@@ -61,7 +61,7 @@ static std::vector<char> readFileText(const std::string& filename) {
 }
 
 namespace Nashi {
-#ifndef NASHI_USE_DIRECT3D12
+#if !defined(NASHI_USE_DIRECT3D12) && !defined(NASHI_USE_METAL)
     struct UniformBufferObject {
         alignas(16) glm::mat4 model;
         alignas(16) glm::mat4 view;

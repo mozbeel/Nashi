@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.10)
-project(nashi)
+project(nashi LANGUAGES C CXX OBJC OBJCXX)
 include(FetchContent)
 
 # Default to Debug if not specified (for single-config generators)
@@ -23,7 +23,7 @@ else()
 endif()
 
 # Sources, headers, shaders
-file(GLOB_RECURSE SOURCES "${NASHI_ROOT}/src/*.cpp")
+file(GLOB_RECURSE SOURCES "${NASHI_ROOT}/src/*.cpp" "${NASHI_ROOT}/src/*.mm")
 file(GLOB_RECURSE HEADERS "${NASHI_ROOT}/src/headers/*.hpp" "${NASHI_ROOT}/src/headers/*.h")
 file(GLOB_RECURSE SHADERS "${NASHI_ROOT}/src/shaders/*.frag" "${NASHI_ROOT}/src/shaders/*.vert" "${NASHI_ROOT}/src/shaders/*.comp")
 
@@ -35,15 +35,10 @@ target_include_directories(nashi PRIVATE "${NASHI_ROOT}/src/headers")
 source_group(TREE "${NASHI_ROOT}/src/shaders" PREFIX "Shaders" FILES ${SHADERS})
 source_group(TREE "${NASHI_ROOT}/src/headers" PREFIX "Headers" FILES ${HEADERS})
 
-# GLM dependency
-FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
-FetchContent_MakeAvailable(glm)
-
-set(SPIRV_CROSS_PATH spirv-cross)
-set(DXC_PATH "C:/VulkanSDK/1.3.296.0/Bin/dxc")
-
 set(GLAD_INCLUDE_PATH "")
 if(WIN32)
+  set(SPIRV_CROSS_PATH spirv-cross)
+  set(DXC_PATH "C:/VulkanSDK/1.3.296.0/Bin/dxc")
   # find_package(Vulkan)
   # if(Vulkan_FOUND)
   #   message(STATUS "Vulkan headers & loader found.")
@@ -56,8 +51,8 @@ if(WIN32)
   #   message(WARNING "Vulkan loader NOT found. Disabling Vulkan support.")
   #   set(NASHI_USE_VULKAN OFF)
   # endif()
-
-
+  
+  
   # find_package(OpenGL REQUIRED)
   # add_library(glad STATIC
   #   ${NASHI_ROOT}/vendor/glad/src/glad.c
@@ -67,7 +62,20 @@ if(WIN32)
   # message(STATUS "Glad include path: ${NASHI_ROOT}/vendor/glad/include")
   
   set(NASHI_USE_DIRECT3D12 ON)
+  
+  # GLM dependency
+  if(NOT NASHI_USE_DIRECT3D12)
+    FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
+    FetchContent_MakeAvailable(glm)
+  endif()
 
+elseif(APPLE AND NOT IOS)
+  message("Enabling metal...")
+  set(NASHI_USE_METAL ON)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7" CACHE STRING "Minimum macOS deployment version")
+  target_compile_options(nashi PRIVATE
+    $<$<COMPILE_LANGUAGE:OBJCXX>:-fmodules -fcxx-modules>
+  )
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config
@@ -93,7 +101,7 @@ if(CMAKE_CONFIGURATION_TYPES)
     )
     endif()
     
-    else()
+  else()
     # Single-config generators (Makefile, Ninja)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(nashi PRIVATE NASHI_RELEASE_BUILD)
@@ -111,7 +119,6 @@ endif()
 
 # SDL3 (if VR not enabled)
 if(NOT NASHI_VR)
-  include(FetchContent)
   FetchContent_Declare(SDL3 GIT_REPOSITORY https://github.com/libsdl-org/SDL.git GIT_TAG main)
   FetchContent_MakeAvailable(SDL3)
   set(MIDDLEWARE SDL3::SDL3)
@@ -262,24 +269,35 @@ elseif(NASHI_USE_DIRECT3D12)
             -P "${CMAKE_CURRENT_SOURCE_DIR}/CopyShaders.cmake"
     COMMENT "Copying compiled CSO shaders to binary directory"
   )
-
+elseif(NASHI_USE_METAL)
+  message("Enabled metal...")
+  target_link_libraries(nashi PRIVATE ${MIDDLEWARE})
+  target_link_libraries(nashi PRIVATE "-framework Metal" "-framework QuartzCore" "-framework Cocoa")
+  target_compile_definitions(nashi PRIVATE NASHI_USE_METAL)
+  set_target_properties(nashi PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_FRAMEWORK_IDENTIFIER com.example.nashi
+  )
+  
 endif()
 
 # Optional: Strip binary on release builds for non-MSVC
-if(NOT MSVC)
-  if(CMAKE_CONFIGURATION_TYPES)
-    add_custom_command(TARGET nashi POST_BUILD
-      COMMAND $<$<CONFIG:Release>:${CMAKE_STRIP} $<TARGET_FILE:nashi>>
-      COMMENT "Stripping symbols from release binary"
-      VERBATIM
-    )
-  else()
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+if (NOT APPLE)
+  if(NOT MSVC)
+    if(CMAKE_CONFIGURATION_TYPES)
       add_custom_command(TARGET nashi POST_BUILD
-        COMMAND ${CMAKE_STRIP} $<TARGET_FILE:nashi>
+        COMMAND $<$<CONFIG:Release>:${CMAKE_STRIP} $<TARGET_FILE:nashi>>
         COMMENT "Stripping symbols from release binary"
         VERBATIM
       )
+    else()
+      if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_custom_command(TARGET nashi POST_BUILD
+          COMMAND ${CMAKE_STRIP} $<TARGET_FILE:nashi>
+          COMMENT "Stripping symbols from release binary"
+          VERBATIM
+        )
+      endif()
     endif()
   endif()
 endif()

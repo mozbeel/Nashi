@@ -4,6 +4,8 @@
 #   include <renderer_gl.hpp>
 #elif NASHI_USE_DIRECT3D12
 #   include <renderer_d3d12.hpp>
+#elif NASHI_USE_METAL
+#   include <renderer_mtl.hpp>
 #endif
 
 
