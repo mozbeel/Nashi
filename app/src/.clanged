@@ -1,0 +1,2 @@
+CompileFlags:
+	Add: [-DNASHI_USE_VULKAN]

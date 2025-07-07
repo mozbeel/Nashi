@@ -8,7 +8,6 @@
 #   include <renderer_mtl.hpp>
 #endif
 
-
 #include <iostream>
 #include <vector>
 

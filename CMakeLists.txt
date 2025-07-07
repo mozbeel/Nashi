@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.10)
-project(nashi LANGUAGES C CXX OBJC OBJCXX)
+project(nashi)
 include(FetchContent)
 
 # Default to Debug if not specified (for single-config generators)
@@ -12,6 +12,8 @@ set(NASHI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/app")
 set(NASHI_USE_VULKAN OFF)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_DISABLE_X11 ON CACHE BOOL "Disable X11 dependency check" FORCE)
+set(SDL_DISABLE_WAYLAND ON CACHE BOOL "Disable Wayland dependency check" FORCE)
 
 # Define release flags for different compilers
 if(MSVC)
@@ -23,7 +25,7 @@ else()
 endif()
 
 # Sources, headers, shaders
-file(GLOB_RECURSE SOURCES "${NASHI_ROOT}/src/*.cpp" "${NASHI_ROOT}/src/*.mm")
+file(GLOB_RECURSE SOURCES "${NASHI_ROOT}/src/*.cpp")
 file(GLOB_RECURSE HEADERS "${NASHI_ROOT}/src/headers/*.hpp" "${NASHI_ROOT}/src/headers/*.h")
 file(GLOB_RECURSE SHADERS "${NASHI_ROOT}/src/shaders/*.frag" "${NASHI_ROOT}/src/shaders/*.vert" "${NASHI_ROOT}/src/shaders/*.comp")
 
@@ -65,8 +67,9 @@ if(WIN32)
   
   # GLM dependency
   if(NOT NASHI_USE_DIRECT3D12)
-    FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
-    FetchContent_MakeAvailable(glm)
+    find_package(glm REQUIRED)
+    # FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
+    # FetchContent_MakeAvailable(glm)
   endif()
 
 elseif(APPLE AND NOT IOS)
@@ -76,6 +79,13 @@ elseif(APPLE AND NOT IOS)
   target_compile_options(nashi PRIVATE
     $<$<COMPILE_LANGUAGE:OBJCXX>:-fmodules -fcxx-modules>
   )
+elseif(UNIX)
+  set(DXC_PATH dxc)
+  set(NASHI_USE_VULKAN ON)
+
+  FetchContent_Declare(Vulkan-Headers GIT_REPOSITORY https://github.com/KhronosGroup/Vulkan-Headers.git GIT_TAG main)
+  FetchContent_MakeAvailable(Vulkan-Headers)
+  find_package(Vulkan)
 endif()
 
 # Handle Release flags and definitions for multi-config and single-config
@@ -85,12 +95,12 @@ if(CMAKE_CONFIGURATION_TYPES)
     $<$<CONFIG:Release>:NASHI_RELEASE_BUILD>
   )
   target_compile_options(nashi PRIVATE
-    $<$<CONFIG:Release>:${RELEASE_COMPILE_FLAGS}>
+    $<$<CONFIG:Rele:ase>:${RELEASE_COMPILE_FLAGS}>
   )
   target_link_options(nashi PRIVATE
     $<$<CONFIG:Release>:${RELEASE_LINK_FLAGS}>
   )
-  
+
   # Windows-specific release linker flags and properties
   if(WIN32)
     target_link_options(nashi PRIVATE
@@ -99,36 +109,46 @@ if(CMAKE_CONFIGURATION_TYPES)
     set_property(TARGET nashi PROPERTY
       WIN32_EXECUTABLE $<$<CONFIG:Release>:TRUE>
     )
-    endif()
-    
-  else()
-    # Single-config generators (Makefile, Ninja)
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  endif()
+
+else()
+  # Single-config generators (Makefile, Ninja)
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_definitions(nashi PRIVATE NASHI_RELEASE_BUILD)
     target_compile_options(nashi PRIVATE ${RELEASE_COMPILE_FLAGS})
     target_link_options(nashi PRIVATE ${RELEASE_LINK_FLAGS})
-    
+
     if(WIN32)
       set_target_properties(nashi PROPERTIES
         LINK_FLAGS "/ENTRY:mainCRTStartup"
-        WIN32_EXECUTABLE TRUE
+        WIN32_EXiECUTABLE TRUE
       )
     endif()
   endif()
 endif()
 
 # SDL3 (if VR not enabled)
-if(NOT NASHI_VR)
-  FetchContent_Declare(SDL3 GIT_REPOSITORY https://github.com/libsdl-org/SDL.git GIT_TAG main)
+if (NOT NASHI_VR)
+  FetchContent_Declare(
+    SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL
+    # This will be a tag once SDL3 is released
+    GIT_TAG origin/main
+    OVERRIDE_FIND_PACKAGE
+  )
   FetchContent_MakeAvailable(SDL3)
   set(MIDDLEWARE SDL3::SDL3)
+  message(STATUS "SDL3 found at: ${SDL3_DIR}")
+  message(STATUS "SDL3::SDL3 found: ${SDL3}")
 endif()
 
 set(SHADER_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 # Link libraries and handle shaders
 if(NASHI_USE_VULKAN)
-  target_link_libraries(nashi PRIVATE Vulkan::Vulkan glm::glm ${MIDDLEWARE})
+  # target_link_libraries(nashi PRIVATE glm::glm ${MIDDLEWARE})
+  target_link_libraries(nashi PRIVATE Vulkan::Vulkan ${MIDDLEWARE})
   target_compile_definitions(nashi PRIVATE NASHI_USE_VULKAN)
+  target_include_directories(nashi PRIVATE ${Vulkan-Headers_SRC_DIR}/include)
 
   foreach(SHADER ${SHADERS})
     get_filename_component(FILE_NAME ${SHADER} NAME)
@@ -166,7 +186,8 @@ if(NASHI_USE_VULKAN)
   )
 
 elseif(NASHI_USE_OPENGL)
-  target_link_libraries(nashi PRIVATE glad glm::glm OpenGL::GL ${MIDDLEWARE})
+  # target_link_libraries(nashi PRIVATE glad glm::glm OpenGL::GL ${MIDDLEWARE})
+  target_link_libraries(nashi PRIVATE glad OpenGL::GL ${MIDDLEWARE})
   target_include_directories(glad PUBLIC ${GLAD_INCLUDE_PATH})
   target_compile_definitions(nashi PRIVATE NASHI_USE_OPENGL)
 
