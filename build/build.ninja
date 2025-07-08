@@ -49,11 +49,19 @@ cmake_ninja_workdir = /home/leeb/Projects/Nashi/build/
 
 build cmake_object_order_depends_target_nashi: phony || cmake_object_order_depends_target_SDL3-static
 
+build CMakeFiles/nashi.dir/app/src/Nashi.cpp.o: CXX_COMPILER__nashi_unscanned_Debug /home/leeb/Projects/Nashi/app/src/Nashi.cpp || cmake_object_order_depends_target_nashi
+  DEFINES = -DNASHI_USE_VULKAN
+  DEP_FILE = CMakeFiles/nashi.dir/app/src/Nashi.cpp.o.d
+  FLAGS = -g -std=gnu++20
+  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
+  OBJECT_DIR = CMakeFiles/nashi.dir
+  OBJECT_FILE_DIR = CMakeFiles/nashi.dir/app/src
+
 build CMakeFiles/nashi.dir/app/src/main.cpp.o: CXX_COMPILER__nashi_unscanned_Debug /home/leeb/Projects/Nashi/app/src/main.cpp || cmake_object_order_depends_target_nashi
   DEFINES = -DNASHI_USE_VULKAN
   DEP_FILE = CMakeFiles/nashi.dir/app/src/main.cpp.o.d
   FLAGS = -g -std=gnu++20
-  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
+  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
   OBJECT_DIR = CMakeFiles/nashi.dir
   OBJECT_FILE_DIR = CMakeFiles/nashi.dir/app/src
 
@@ -61,7 +69,7 @@ build CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o: CXX_COMPILER__nashi_uns
   DEFINES = -DNASHI_USE_VULKAN
   DEP_FILE = CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o.d
   FLAGS = -g -std=gnu++20
-  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
+  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
   OBJECT_DIR = CMakeFiles/nashi.dir
   OBJECT_FILE_DIR = CMakeFiles/nashi.dir/app/src
 
@@ -69,7 +77,7 @@ build CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o: CXX_COMPILER__nashi_unscan
   DEFINES = -DNASHI_USE_VULKAN
   DEP_FILE = CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o.d
   FLAGS = -g -std=gnu++20
-  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
+  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
   OBJECT_DIR = CMakeFiles/nashi.dir
   OBJECT_FILE_DIR = CMakeFiles/nashi.dir/app/src
 
@@ -77,7 +85,7 @@ build CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o: CXX_COMPILER__nashi_unscan
   DEFINES = -DNASHI_USE_VULKAN
   DEP_FILE = CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o.d
   FLAGS = -g -std=gnu++20
-  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
+  INCLUDES = -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include
   OBJECT_DIR = CMakeFiles/nashi.dir
   OBJECT_FILE_DIR = CMakeFiles/nashi.dir/app/src
 
@@ -89,7 +97,7 @@ build CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o: CXX_COMPILER__nashi_unscan
 #############################################
 # Link the executable nashi
 
-build nashi: CXX_EXECUTABLE_LINKER__nashi_Debug CMakeFiles/nashi.dir/app/src/main.cpp.o CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o | /nix/store/ams45f9lnsmp6s3b8j5fjvd7csm558yk-vulkan-loader-1.4.313.0/lib/libvulkan.so _deps/sdl3-build/libSDL3.a || _deps/sdl3-build/libSDL3.a
+build nashi: CXX_EXECUTABLE_LINKER__nashi_Debug CMakeFiles/nashi.dir/app/src/Nashi.cpp.o CMakeFiles/nashi.dir/app/src/main.cpp.o CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o | /nix/store/ams45f9lnsmp6s3b8j5fjvd7csm558yk-vulkan-loader-1.4.313.0/lib/libvulkan.so _deps/sdl3-build/libSDL3.a || _deps/sdl3-build/libSDL3.a
   DEP_FILE = CMakeFiles/nashi.dir/link.d
   FLAGS = -g
   LINK_FLAGS = -pthread -Wl,--dependency-file=CMakeFiles/nashi.dir/link.d

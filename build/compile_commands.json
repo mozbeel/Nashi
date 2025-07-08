@@ -1,25 +1,31 @@
 [
 {
   "directory": "/home/leeb/Projects/Nashi/build",
-  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/main.cpp.o -c /home/leeb/Projects/Nashi/app/src/main.cpp",
+  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/Nashi.cpp.o -c /home/leeb/Projects/Nashi/app/src/Nashi.cpp",
+  "file": "/home/leeb/Projects/Nashi/app/src/Nashi.cpp",
+  "output": "CMakeFiles/nashi.dir/app/src/Nashi.cpp.o"
+},
+{
+  "directory": "/home/leeb/Projects/Nashi/build",
+  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/main.cpp.o -c /home/leeb/Projects/Nashi/app/src/main.cpp",
   "file": "/home/leeb/Projects/Nashi/app/src/main.cpp",
   "output": "CMakeFiles/nashi.dir/app/src/main.cpp.o"
 },
 {
   "directory": "/home/leeb/Projects/Nashi/build",
-  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_d3d12.cpp",
+  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_d3d12.cpp",
   "file": "/home/leeb/Projects/Nashi/app/src/renderer_d3d12.cpp",
   "output": "CMakeFiles/nashi.dir/app/src/renderer_d3d12.cpp.o"
 },
 {
   "directory": "/home/leeb/Projects/Nashi/build",
-  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_gl.cpp",
+  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_gl.cpp",
   "file": "/home/leeb/Projects/Nashi/app/src/renderer_gl.cpp",
   "output": "CMakeFiles/nashi.dir/app/src/renderer_gl.cpp.o"
 },
 {
   "directory": "/home/leeb/Projects/Nashi/build",
-  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_vk.cpp",
+  "command": "/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin/g++ -DNASHI_USE_VULKAN -I/home/leeb/Projects/Nashi/app/src/headers -I/home/leeb/Projects/Nashi/include -I/include -I/home/leeb/Projects/Nashi/build/_deps/sdl3-build/include-revision -I/home/leeb/Projects/Nashi/build/_deps/sdl3-src/include -g -std=gnu++20 -o CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o -c /home/leeb/Projects/Nashi/app/src/renderer_vk.cpp",
   "file": "/home/leeb/Projects/Nashi/app/src/renderer_vk.cpp",
   "output": "CMakeFiles/nashi.dir/app/src/renderer_vk.cpp.o"
 },
