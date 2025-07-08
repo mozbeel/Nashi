@@ -157,6 +157,8 @@ if(NASHI_USE_VULKAN)
     set(SPIRV_FILE "${SHADER_OUTPUT_DIR}/${FILE_NAME}.spv")
     set(SHADER_STAGE "")
 
+    message("Compiling HLSL shader ${SHADER} to SPIRV")
+
     if(FILE_EXT STREQUAL ".vert")
         set(SHADER_STAGE "vs_6_0")
     elseif(FILE_EXT STREQUAL ".frag")

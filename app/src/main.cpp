@@ -9,7 +9,6 @@
 #endif
 
 #include <iostream>
-#include <vector>
 
 int main() {
   if(SDL_Init(SDL_INIT_VIDEO) == false) {
@@ -68,18 +67,18 @@ int main() {
   extensions[0] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
   SDL_memcpy(&extensions[1], instance_extensions, count_instance_extensions * sizeof(const char*)); 
 
-  Nashi::VulkanRenderer* vkRenderer = new Nashi::VulkanRenderer(extensions, countExtensions, window, event);
-  vkRenderer->init();
+  Nashi::VulkanRenderer vkRenderer(extensions, countExtensions, window, event);
+  vkRenderer.init();
 #elif NASHI_USE_OPENGL
-  Nashi::OpenGLRenderer* openGLRenderer = new Nashi::OpenGLRenderer(window, event);
-  openGLRenderer->init();
+  Nashi::OpenGLRenderer openGLRenderer(window, event);
+  openGLRenderer.init();
 
 #elif NASHI_USE_DIRECT3D12
   HWND hwnd = (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 
-  Nashi::Direct3D12Renderer* direct3D12Renderer = new Nashi::Direct3D12Renderer(window, event, hwnd);
+  Nashi::Direct3D12Renderer direct3D12Renderer(window, event, hwnd);
 
-  direct3D12Renderer->init();
+  direct3D12Renderer.init();
 #endif
 
 
@@ -92,30 +91,30 @@ int main() {
           break;
         case SDL_EVENT_WINDOW_RESIZED:
 #ifdef NASHI_USE_VULKAN
-          vkRenderer->m_windowResized = true;
+          vkRenderer.m_windowResized = true;
 #elif NASHI_USE_OPENGL
-          openGLRenderer->m_windowResized = true;
+          openGLRenderer.m_windowResized = true;
 #elif NASHI_USE_DIRECT3D12
-          direct3D12Renderer->m_windowResized = true;
+          direct3D12Renderer.m_windowResized = true;
 #endif
           break;
       }
     }
 #ifdef NASHI_USE_VULKAN
-    vkRenderer->draw();
+    vkRenderer.draw();
 #elif NASHI_USE_OPENGL
-    openGLRenderer->draw();
+    openGLRenderer.draw();
 #elif NASHI_USE_DIRECT3D12
-    direct3D12Renderer->draw();
+    direct3D12Renderer.draw();
 #endif
 
   }
 #ifdef NASHI_USE_VULKAN
-  vkRenderer->cleanup();
+  vkRenderer.cleanup();
 #elif NASHI_USE_OPENGL
-  openGLRenderer->cleanup();
+  openGLRenderer.cleanup();
 #elif NASHI_USE_DIRECT3D12
-  direct3D12Renderer->cleanup();
+  direct3D12Renderer.cleanup();
 #endif
 
   SDL_DestroyWindow(window);

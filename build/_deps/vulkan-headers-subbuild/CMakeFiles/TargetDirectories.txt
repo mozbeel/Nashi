@@ -1,0 +1,3 @@
+/home/leeb/Projects/Nashi/build/_deps/vulkan-headers-subbuild/CMakeFiles/vulkan-headers-populate.dir
+/home/leeb/Projects/Nashi/build/_deps/vulkan-headers-subbuild/CMakeFiles/edit_cache.dir
+/home/leeb/Projects/Nashi/build/_deps/vulkan-headers-subbuild/CMakeFiles/rebuild_cache.dir
