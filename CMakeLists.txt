@@ -31,7 +31,7 @@ file(GLOB_RECURSE SHADERS "${NASHI_ROOT}/src/shaders/*.frag" "${NASHI_ROOT}/src/
 
 add_executable(nashi ${SOURCES} ${SHADERS} ${HEADERS})
 
-target_include_directories(nashi PRIVATE "${NASHI_ROOT}/src/headers")
+target_include_directories(nashi PRIVATE "${NASHI_ROOT}/src/headers" "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Organize in IDE
 source_group(TREE "${NASHI_ROOT}/src/shaders" PREFIX "Shaders" FILES ${SHADERS})

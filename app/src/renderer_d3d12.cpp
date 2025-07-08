@@ -21,6 +21,10 @@ namespace Nashi {
 	}
 #endif
 
+  ~Direct3D12Renderer::Direct3D12Renderer() {
+    cleanup();
+  }
+
 	void Direct3D12Renderer::createFactory() {
 		ComPtr<IDXGIFactory4> dxFactory4;
 		UINT createFactoryFlags = 0;
@@ -608,5 +612,16 @@ namespace Nashi {
 	void Direct3D12Renderer::cleanup() {
 		flush();
 	}
+}
+#else
+#include <renderer_d3d12.hpp>
+
+namespace Nashi {
+  Direct3D12Renderer::Direct3D12Renderer(SDL_Window* window, SDL_Event event, HWND hwnd) {}
+  Direct3D12Renderer::~Direct3D12Renderer() {}
+  
+  void Direct3D12Renderer::init() {}
+  void Direct3D12Renderer::draw() {}
+  void Direct3D12Renderer::cleanup() {}
 }
 #endif

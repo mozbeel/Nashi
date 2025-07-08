@@ -1,3 +1,4 @@
+#pragma once
 #ifdef NASHI_USE_VULKAN
 #include <vulkan/vulkan.h>
 
@@ -5,18 +6,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <vector>
-#include <cstring>
-#include <map>
-#include <optional>
 #include <set>
-#include <cstdint>
-#include <limits>
-#include <fstream>
-#include <algorithm>
-#include <array>
 #include <chrono>
+#include <map>
+#include <cstring>
+#include <optional>
+#include <cstdint>
+#include <array>
 
 #include <renderer.hpp>
 
@@ -86,7 +83,7 @@ namespace Nashi {
     };
 
 
-    class VulkanRenderer : IRenderer {
+    class VulkanRenderer : public IRenderer {
     private:
         VkInstance m_vkInstance;
         VkPhysicalDevice m_vkPhysicalDevice = VK_NULL_HANDLE;
@@ -218,11 +215,28 @@ namespace Nashi {
     public:
         bool m_windowResized;
         VulkanRenderer(const char** m_extraExtensions, int m_extraExtensionsCount, SDL_Window* window, SDL_Event event);
+        ~VulkanRenderer();
         void init();
         void draw();
         void cleanup();
     };
 };
 
+#else
+
+#include <renderer.hpp>
+namespace Nashi {
+  class VulkanRenderer : public IRenderer {
+  public:    
+    bool m_windowResized;
+    VulkanRenderer(const char** m_extraExtensions, int m_extraExtensionsCount, SDL_Window* window, SDL_Event event);
+    ~VulkanRenderer();
+
+    void init();
+    void draw();
+    void cleanup();
+
+  };
+}
 
 #endif

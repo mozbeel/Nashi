@@ -9,6 +9,10 @@ namespace Nashi {
         this->m_event = event;
     }
 
+    VulkanRenderer::~VulkanRenderer() {
+      cleanup();
+    }
+
     void VulkanRenderer::createInstance() {
         if (enableValidationLayers && !checkValidationSupport()) {
             throw std::runtime_error("validation layers requested, but not available!");
@@ -1081,5 +1085,17 @@ namespace Nashi {
         vkDestroyInstance(m_vkInstance, nullptr);
     }
 };
+#else
 
+#include <renderer_vk.hpp>
+
+namespace Nashi {
+  VulkanRenderer::VulkanRenderer(const char** m_extraExtensions, int m_extraExtensionsCount, SDL_Window* window, SDL_Event event) {
+  
+  VulkanRenderer::~VulkanRenderer() {};
+
+  void VulkanRenderer::init() {}
+  void VulkanRenderer::draw() {}
+  void VulkanRenderer::cleanup() {}
+}
 #endif

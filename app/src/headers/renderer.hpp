@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef NASHI_VR
 #   include <SDL3/SDL.h>
 #   ifdef NASHI_USE_VULKAN

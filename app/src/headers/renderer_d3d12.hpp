@@ -1,3 +1,4 @@
+#pragma once
 #ifdef NASHI_USE_DIRECT3D12
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -72,7 +73,7 @@ struct UniformBufferObject {
 };
 
 namespace Nashi {
-	class Direct3D12Renderer : IRenderer {
+	class Direct3D12Renderer : public IRenderer {
 		SDL_Window* m_window;
 		int m_windowWidth;
 		int m_windowHeight;
@@ -197,10 +198,32 @@ namespace Nashi {
 	public:
 		bool m_windowResized = false;
 		Direct3D12Renderer(SDL_Window* window, SDL_Event event, HWND hwnd);
+    ~Direct3D12Renderer();
 
 		void init();
 		void draw();
 		void cleanup();
 	};
 }
+#else
+
+#include <renderer.hpp>
+
+using HWND = void*;
+
+namespace Nashi {
+  class Direct3D12Renderer : public IRenderer {
+  
+  public:
+    bool m_windowResized = false;
+		Direct3D12Renderer(SDL_Window* window, SDL_Event event, HWND hwnd);
+    ~Direct3D12Renderer();
+
+		void init();
+		void draw();
+		void cleanup();
+
+  };
+}
+
 #endif

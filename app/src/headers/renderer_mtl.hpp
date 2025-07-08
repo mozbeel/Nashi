@@ -1,3 +1,4 @@
+#pragma once
 #ifdef NASHI_USE_METAL
 
 #include <renderer.hpp>

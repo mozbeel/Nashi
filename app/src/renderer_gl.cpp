@@ -8,6 +8,10 @@ namespace Nashi {
 		this->m_event = event;
 	}
 
+  OpenGLRenderer::~OpenGLRenderer() {
+    cleanup();
+  }
+
 	void OpenGLRenderer::resizeWindow() {
 		SDL_GetWindowSizeInPixels(m_window, &m_windowWidth, &m_windowHeight);
 		glViewport(0, 0, m_windowWidth, m_windowHeight);
@@ -177,4 +181,20 @@ namespace Nashi {
 		SDL_GL_DestroyContext(m_glContext);
 	}
 }
+#else
+
+#include <renderer_gl.hpp>
+
+namespace Nashi {
+  OpenGLRenderer::OpenGLRenderer(SDL_Window* window, SDL_Event event) {
+  
+  }
+
+  OpenGLRenderer::~OpenGLRenderer() {};
+
+  void OpenGLRenderer::init() {}
+  void OpenGLRenderer::draw() {}
+  void OpenGLRenderer::cleanup() {}
+}
+
 #endif

@@ -1,3 +1,4 @@
+#pragma once
 #ifdef NASHI_USE_OPENGL
 #include <glad/glad.h>
 #include <renderer.hpp>
@@ -10,7 +11,7 @@
 #define SDL_WINDOW_NAME "OpenGL Window (nashi)"
 
 namespace Nashi {
-	class OpenGLRenderer : IRenderer {
+	class OpenGLRenderer : public IRenderer {
 		SDL_GLContext m_glContext;
 		SDL_Window* m_window;
 		SDL_Event m_event;
@@ -73,11 +74,28 @@ namespace Nashi {
 	public:
 		bool m_windowResized = false;
 		OpenGLRenderer(SDL_Window* window, SDL_Event event);
+    ~OpenGLRenderer();
 
 		void init();
 		void draw();
 		void cleanup();
 	};
 
+}
+#else
+#include <renderer.hpp>
+
+namespace Nashi {
+  class OpenGLRenderer : public IRenderer {
+	public:
+		bool m_windowResized = false;
+		OpenGLRenderer(SDL_Window* window, SDL_Event event);
+    ~OpenGLRenderer();
+
+		void init();
+		void draw();
+		void cleanup();
+
+  };
 }
 #endif
