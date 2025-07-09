@@ -79,6 +79,7 @@ namespace Nashi {
 
 		virtual void init() = 0;
 		virtual void draw() = 0;
+    virtual void resize() = 0;
 		virtual void cleanup() = 0;
 	};
 

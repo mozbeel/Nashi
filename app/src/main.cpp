@@ -1,14 +1,4 @@
-#ifdef NASHI_USE_VULKAN
-#   include <renderer_vk.hpp>
-#elif NASHI_USE_OPENGL
-#   include <renderer_gl.hpp>
-#elif NASHI_USE_DIRECT3D12
-#   include <renderer_d3d12.hpp>
-#elif NASHI_USE_METAL
-#   include <renderer_mtl.hpp>
-#endif
-
-#include <iostream>
+#include <Nashi/Nashi.hpp>
 
 int main() {
   if(SDL_Init(SDL_INIT_VIDEO) == false) {
@@ -44,43 +34,15 @@ int main() {
   bool running = true;
   SDL_Event event;
   memset(&event, 0, sizeof(event));
-#ifdef NASHI_USE_VULKAN
-  unsigned int extensionCount = 0;
-  if (!SDL_Vulkan_GetInstanceExtensions(&extensionCount)) {
-      // handle error
-  }
 
-  Uint32 count_instance_extensions;
-  const char * const *instance_extensions = SDL_Vulkan_GetInstanceExtensions(&count_instance_extensions);
+  Nashi::Init init;
+  init.backend = Nashi::VULKAN;
+  init.SDL_event = event;
+  init.SDL_window = window;
 
-  if (instance_extensions == NULL) {
-    std::cerr << "SDL_Vulkan_GetInstanceExtensions failed: " << SDL_GetError() << "\n";
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return EXIT_FAILURE;
-  }
+  std::cout << "Window: " << window << std::endl;
 
-  int countExtensions = count_instance_extensions + 1;
-  SDL_malloc(countExtensions * sizeof(const char *));
-  // Fix SDL_malloc cast to correct type
-  const char** extensions = static_cast<const char**>(SDL_malloc(countExtensions * sizeof(const char*)));  
-  extensions[0] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
-  SDL_memcpy(&extensions[1], instance_extensions, count_instance_extensions * sizeof(const char*)); 
-
-  Nashi::VulkanRenderer vkRenderer(extensions, countExtensions, window, event);
-  vkRenderer.init();
-#elif NASHI_USE_OPENGL
-  Nashi::OpenGLRenderer openGLRenderer(window, event);
-  openGLRenderer.init();
-
-#elif NASHI_USE_DIRECT3D12
-  HWND hwnd = (HWND) SDL_GetPointerProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-
-  Nashi::Direct3D12Renderer direct3D12Renderer(window, event, hwnd);
-
-  direct3D12Renderer.init();
-#endif
-
+  Nashi::init(init);
 
   while(running) {
     while (SDL_PollEvent(&event)) {
@@ -90,35 +52,17 @@ int main() {
           running = false;
           break;
         case SDL_EVENT_WINDOW_RESIZED:
-#ifdef NASHI_USE_VULKAN
-          vkRenderer.m_windowResized = true;
-#elif NASHI_USE_OPENGL
-          openGLRenderer.m_windowResized = true;
-#elif NASHI_USE_DIRECT3D12
-          direct3D12Renderer.m_windowResized = true;
-#endif
+          Nashi::resize();
           break;
       }
     }
-#ifdef NASHI_USE_VULKAN
-    vkRenderer.draw();
-#elif NASHI_USE_OPENGL
-    openGLRenderer.draw();
-#elif NASHI_USE_DIRECT3D12
-    direct3D12Renderer.draw();
-#endif
-
+    Nashi::draw();
   }
-#ifdef NASHI_USE_VULKAN
-  vkRenderer.cleanup();
-#elif NASHI_USE_OPENGL
-  openGLRenderer.cleanup();
-#elif NASHI_USE_DIRECT3D12
-  direct3D12Renderer.cleanup();
-#endif
+  Nashi::shutdown();
 
   SDL_DestroyWindow(window);
   SDL_Quit();
 
   return 0;
 }
+ 

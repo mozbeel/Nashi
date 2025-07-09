@@ -151,6 +151,10 @@ namespace Nashi {
 		SDL_GL_SwapWindow(m_window);
 	}
 
+  void OpenGLRenderer::resize() {
+    m_windowResized = true;
+  }
+
 	void OpenGLRenderer::updateUniformBuffer() {
 		static auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -194,6 +198,7 @@ namespace Nashi {
 
   void OpenGLRenderer::init() {}
   void OpenGLRenderer::draw() {}
+  void OpenGLRenderer::resize() {}
   void OpenGLRenderer::cleanup() {}
 }
 

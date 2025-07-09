@@ -1,9 +1,11 @@
-#include "renderer_vk.hpp"
 #include <Nashi/Nashi.hpp>
+
+#include <iostream>
 
 namespace Nashi {
 
 namespace Helpers {
+
   IRenderer* getBackendClass() {
     switch(g_init.backend) {
       case LNP:
@@ -30,6 +32,9 @@ namespace Helpers {
   }
 }
 
+  Init g_init;
+  std::variant<VulkanRenderer* , OpenGLRenderer* , Direct3D12Renderer*> g_renderer;
+
   bool init(Init init) {
     switch (init.backend) {
       case LNP: {
@@ -37,31 +42,24 @@ namespace Helpers {
       }
 
       case VULKAN: {
-        unsigned int extensionCount = 0;
-        
-        if (!SDL_Vulkan_GetInstanceExtensions(&extensionCount)) {
-          return false;
+        Uint32 extensionCount = 0;
+        const char* const* instanceExtensions = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
+
+        if (instanceExtensions == nullptr) {
+            std::cerr << "SDL_Vulkan_GetInstanceExtensions failed: " << SDL_GetError() << "\n";
+            SDL_DestroyWindow(init.SDL_window);
+            SDL_Quit();
+            return false;
         }
 
-        Uint32 count_instance_extensions;
-        const char * const *instance_extensions = SDL_Vulkan_GetInstanceExtensions(&count_instance_extensions);
-
-        if (instance_extensions == NULL) {
-          std::cerr << "SDL_Vulkan_GetInstanceExtensions failed: " << SDL_GetError() << "\n";
-          SDL_DestroyWindow(init.SDL_window);
-          SDL_Quit();
-          return false;
-        }
-
-        int countExtensions = count_instance_extensions + 1;
-        SDL_malloc(countExtensions * sizeof(const char *));
-        // Fix SDL_malloc cas:WEBGP:WEBGPUUt to correct type
-        const char** extensions = static_cast<const char**>(SDL_malloc(countExtensions * sizeof(const char*)));  
+        int countExtensions = extensionCount + 1;  // +1 for VK_EXT_DEBUG_REPORT
+        const char** extensions = static_cast<const char**>(SDL_malloc(countExtensions * sizeof(const char*)));
         extensions[0] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
-        SDL_memcpy(&extensions[1], instance_extensions, count_instance_extensions * sizeof(const char*)); 
+        SDL_memcpy(&extensions[1], instanceExtensions, extensionCount * sizeof(const char*));
 
-        g_renderer = new VulkanRenderer(extensions, extensionCount, init.SDL_window, init.SDL_event);
-        VulkanRenderer* vk = std::get<VulkanRenderer*>(g_renderer);
+        g_renderer = new VulkanRenderer(extensions, countExtensions, init.SDL_window, init.SDL_event);
+        VulkanRenderer* vk = std::get<VulkanRenderer*>(g_renderer); 
+
         vk->init();
       }
 
@@ -90,8 +88,15 @@ namespace Helpers {
     Helpers::getBackendClass()->draw();
   }
 
+  void resize() {
+      std::cout << "Resize called" << std::endl;
+      
+      auto* backend = Helpers::getBackendClass();
+
+      backend->resize();
+  }
+
   void shutdown() {
-    Helpers::getBackendClass()->cleanup();
     delete Helpers::getBackendClass();
 
   }

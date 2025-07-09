@@ -33,14 +33,15 @@ namespace Nashi {
     IRenderer* getBackendClass();
   };
 
-  Init g_init;
-  std::variant<VulkanRenderer* , OpenGLRenderer* , Direct3D12Renderer*> g_renderer;
+  extern Init g_init;
+  extern std::variant<VulkanRenderer* , OpenGLRenderer* , Direct3D12Renderer*> g_renderer;
 
   bool init(Init init);
 
   void draw();
 
-  void shutdown();
+  void resize();
 
+  void shutdown();
 }
 

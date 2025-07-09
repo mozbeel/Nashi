@@ -609,6 +609,10 @@ namespace Nashi {
 
 	}
 
+  void Direct3D12Renderer::resize() {
+    m_windowResized = true;
+  }
+
 	void Direct3D12Renderer::cleanup() {
 		flush();
 	}
@@ -622,6 +626,7 @@ namespace Nashi {
   
   void Direct3D12Renderer::init() {}
   void Direct3D12Renderer::draw() {}
+  void Direct3D12Renderer::resize() {}
   void Direct3D12Renderer::cleanup() {}
 }
 #endif

@@ -4,3 +4,4 @@ vendor/glad/src
 bin/dxc
 bin/dxv
 bin/dxv-3.7
+build/

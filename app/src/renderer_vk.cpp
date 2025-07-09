@@ -81,7 +81,7 @@ namespace Nashi {
     }
 
     void VulkanRenderer::createSurface() {
-
+        std::cout << "VkInstance: " << m_vkInstance << std::endl;
         if (!SDL_Vulkan_CreateSurface(m_window, m_vkInstance, nullptr, &m_vkSurface)) {
             throw std::runtime_error("Failed to create Vulkan surface with SDL!");
         }
@@ -916,7 +916,7 @@ namespace Nashi {
         createCommandBuffers();
         createSyncObjects();
     }
-
+    
     void VulkanRenderer::draw() {
 
         CHECK_VK(vkWaitForFences(m_vkDevice, 1, &m_vkInFlightFences[currentFrame], VK_TRUE, UINT64_MAX));
@@ -971,7 +971,7 @@ namespace Nashi {
 
         VkResult resultPresent = vkQueuePresentKHR(m_vkPresentQueue, &presentInfo);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_windowResized) {
+        if (resultPresent == VK_ERROR_OUT_OF_DATE_KHR || resultPresent == VK_SUBOPTIMAL_KHR || m_windowResized) {
             m_windowResized = false;
             recreateSwapChain();
         }
@@ -1016,6 +1016,8 @@ namespace Nashi {
     void VulkanRenderer::recreateSwapChain() {
         int width = 0, height = 0;
         SDL_GetWindowSizeInPixels(m_window, &width, &height);
+        
+        std::cout << "Width: " << width << ", Height: " << height << std::endl;
         while (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED) {
             SDL_WaitEvent(&m_event);
         }
@@ -1052,6 +1054,10 @@ namespace Nashi {
         attributeDescriptions[1].offset = offsetof(Vertex, color);
 
         return attributeDescriptions;
+    }
+
+    void VulkanRenderer::resize() {
+      m_windowResized = true;
     }
 
     void VulkanRenderer::cleanup() {

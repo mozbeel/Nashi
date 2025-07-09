@@ -202,6 +202,7 @@ namespace Nashi {
 
 		void init();
 		void draw();
+    void resize();
 		void cleanup();
 	};
 }
@@ -221,6 +222,7 @@ namespace Nashi {
 
 		void init();
 		void draw();
+    void resize();
 		void cleanup();
 
   };
