@@ -22,6 +22,7 @@ namespace Nashi {
 
   struct Init {
     Backend backend;
+    bool initializeWithOpenXR;
     SDL_Window* SDL_window;
     void* nwh;
     void* ndt;
@@ -37,6 +38,11 @@ namespace Nashi {
   extern std::variant<VulkanRenderer* , OpenGLRenderer* , Direct3D12Renderer*> g_renderer;
 
   bool init(Init init);
+
+  void createVertexBuffer();
+  void createIndexBuffer();
+
+  void createPipelineLayout(); 
 
   void draw();
 

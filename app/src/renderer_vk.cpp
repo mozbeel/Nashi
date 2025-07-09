@@ -81,7 +81,6 @@ namespace Nashi {
     }
 
     void VulkanRenderer::createSurface() {
-        std::cout << "VkInstance: " << m_vkInstance << std::endl;
         if (!SDL_Vulkan_CreateSurface(m_window, m_vkInstance, nullptr, &m_vkSurface)) {
             throw std::runtime_error("Failed to create Vulkan surface with SDL!");
         }
@@ -1017,7 +1016,6 @@ namespace Nashi {
         int width = 0, height = 0;
         SDL_GetWindowSizeInPixels(m_window, &width, &height);
         
-        std::cout << "Width: " << width << ", Height: " << height << std::endl;
         while (SDL_GetWindowFlags(m_window) & SDL_WINDOW_MINIMIZED) {
             SDL_WaitEvent(&m_event);
         }

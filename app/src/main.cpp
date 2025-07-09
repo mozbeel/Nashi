@@ -40,8 +40,6 @@ int main() {
   init.SDL_event = event;
   init.SDL_window = window;
 
-  std::cout << "Window: " << window << std::endl;
-
   Nashi::init(init);
 
   while(running) {

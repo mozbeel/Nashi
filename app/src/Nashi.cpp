@@ -84,13 +84,17 @@ namespace Helpers {
     return true;
   }
 
+  void createVertexBuffer() {}
+
+  void createIndexBuffer() {}
+
+  void createPipelineLayout() {}
+
   void draw() {
     Helpers::getBackendClass()->draw();
   }
 
-  void resize() {
-      std::cout << "Resize called" << std::endl;
-      
+  void resize() { 
       auto* backend = Helpers::getBackendClass();
 
       backend->resize();
