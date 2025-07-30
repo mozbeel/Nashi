@@ -52,7 +52,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .api = .gles,
             .version = .@"2.0",
             .extensions = &.{},
-        }, target);
+        }, b.graph.host);
 
         gl_bindings.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "System", "Library", "Frameworks" }) });
         gl_bindings.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "usr", "include" }) });
