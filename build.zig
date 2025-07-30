@@ -48,26 +48,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     }
 
     if (target.result.os.tag == .ios) {
-        const gl_bindings = glgen.generateBindingsModule(b, .{
-            .api        = .gles,
-            .version    = .@"2.0",
-            .extensions = &.{}, 
-        });
-
-        exe.linkLibC();
-
-        exe.linkFramework("OpenGLES"); // For GLES 2.0
-        exe.linkFramework("UIKit");
-        exe.linkFramework("Foundation");
-        exe.linkFramework("CoreGraphics");
-        exe.linkFramework("CoreMotion"); // Often needed for mobile apps
-        exe.linkFramework("GameController"); // If you're using game controllers
-        exe.linkFramework("Metal"); // If SDL3 or your app uses Metal backend
-        exe.linkFramework("MetalKit"); // If SDL3 or your app uses Metal backend
-        exe.linkFramework("QuartzCore"); // For display links, etc.
-
-        exe.root_module.addImport("gl", gl_bindings);
-
+        @panic("No implementation for ios yet");
     } else {
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api = .gl,
