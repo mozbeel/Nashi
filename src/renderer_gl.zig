@@ -3,24 +3,36 @@ const gl = @import("gl");
 const c = @import("c.zig").c;
 
 pub const renderer = struct {
-    var procs : gl.ProcTable = undefined; // HAS to be defined as var for some reason here
-   
     gl_context : c.SDL_GLContext = undefined,
     window : ?*c.SDL_Window = undefined,
     vbo: c_uint = 0,
+    vertex_shader: c_uint = 0,
 
-    const vertices = &.{
+    var procs : gl.ProcTable = undefined; // HAS to be defined as var for some reason here
+    const vertices = [_]f32{
         -0.5, -0.5, 0.0,
         0.5, -0.5, 0.0,
         0.0, 0.5, 0.0,
     };
+    
+    const vertex_shader_source: [*]const [*]const u8 = 
+        \\#version 330 core 
+        \\layout (location = 0) in vec3 aPos;
+        \\
+        \\void main() {
+        \\  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        \\
+        \\}
+    ;
 
     pub fn init(window: ?*c.SDL_Window) !renderer {
         var self : renderer = .{
             .window = window,
         };
         try self.prepare_opengl();
-        
+       
+        self.create_buffers();
+        self.create_shaders();
     
         return self;
     }
@@ -51,7 +63,24 @@ pub const renderer = struct {
 
     }
 
+    fn create_buffers(self: *renderer) void {
+        var vbos_to_create = [_]c_uint{ self.vbo };
+        gl.GenBuffers(1, vbos_to_create[0..].ptr);
+        gl.BindBuffer(gl.ARRAY_BUFFER, self.vbo);
+
+        gl.BufferData(gl.ARRAY_BUFFER, vertices.len * @sizeOf(f32), &vertices[0], gl.STATIC_DRAW);
+    }
+
+    fn create_shaders(self: *renderer) void {
+        self.vertex_shader = gl.CreateShader(gl.VERTEX_ARRAY);
+
+        gl.ShaderSource(self.vertex_shader, 1, &vertex_shader_source[0], null);
+    }
+
     pub fn destroy(self: *renderer) void {
+        var vbos_to_delete = [_]c_uint{ self.vbo };
+        gl.DeleteBuffers(1, vbos_to_delete[0..].ptr);
+
         _ = c.SDL_GL_DestroyContext(self.gl_context);
         gl.makeProcTableCurrent(null);
 
