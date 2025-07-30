@@ -268,6 +268,8 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     });
     try emcc_settings.put("ALLOW_MEMORY_GROWTH", "1");
     emcc_settings.put("USE_SDL", "3") catch unreachable;
+    emcc_settings.put("USE_WEBGL2", "1") catch unreachable;
+    emcc_settings.put("FULL_ES3", "1") catch unreachable;
 
     const emcc_step = zemscripten.emccStep(
         b,
