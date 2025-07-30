@@ -52,7 +52,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .api = .gles,
             .version = .@"2.0",
             .extensions = &.{},
-        });
+        }, target);
 
         exe.root_module.addImport("gl", gl_bindings);
 
@@ -62,7 +62,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .version = .@"3.3",
             .profile = .compatibility,
             .extensions = &.{},
-        });
+        }, target);
 
         exe.root_module.addImport("gl", gl_bindings);
 
@@ -160,7 +160,7 @@ fn buildApk(
             .api = .gles,
             .version = .@"2.0",
             .extensions = &.{},
-        });
+        }, t);
 
         exe.root_module.addImport("gl", gl_bindings);
 
@@ -238,7 +238,7 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         .api = .gles,
         .version = .@"2.0",
         .extensions = &.{},
-    });
+    }, target);
 
     wasm.root_module.addImport("gl", gl_bindings);
 
