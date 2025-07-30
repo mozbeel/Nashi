@@ -54,7 +54,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .extensions = &.{},
         }, b.resolveTargetQuery(.{
             .cpu_arch = builtin.cpu.arch,
-            .os_tag = .macos,
+            .os_tag = builtin.os.tag,
         }));
 
         gl_bindings.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "System", "Library", "Frameworks" }) });
