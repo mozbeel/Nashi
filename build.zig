@@ -48,14 +48,20 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     }
 
     if (target.result.os.tag == .ios) {
-        exe.linkFramework("OpenGLES");
-        exe.linkFramework("UIKit");
-        exe.linkFramework("QuartzCore");
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api        = .gles,
             .version    = .@"2.0",
             .extensions = &.{}, 
         });
+        exe.linkFramework("OpenGLES");
+        exe.linkFramework("UIKit");
+        exe.linkFramework("QuartzCore");
+
+        gl_bindings.linkFramework("OpenGLES");
+        gl_bindings.linkFramework("UIKit");
+        gl_bindings.linkFramework("QuartzCore");
+
+
         exe.root_module.addImport("gl", gl_bindings);
 
     } else {
