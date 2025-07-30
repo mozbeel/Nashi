@@ -52,7 +52,10 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .api = .gles,
             .version = .@"2.0",
             .extensions = &.{},
-        }, b.graph.host);
+        }, b.resolveTargetQuery(.{
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = .macos,
+        }));
 
         gl_bindings.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "System", "Library", "Frameworks" }) });
         gl_bindings.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "usr", "include" }) });
