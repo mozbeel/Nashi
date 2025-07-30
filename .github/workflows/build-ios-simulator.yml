@@ -24,9 +24,9 @@ jobs:
           path: |
             .zig-cache
             zig-out
-          key: zig-cache-${{ runner.os }}-${{ hashFiles('**/*.zig') }}-${{ hashFiles('build.zig') }}
+          key: zig-cache-ios-simulator-${{ runner.os }}-${{ hashFiles('**/*.zig') }}-${{ hashFiles('build.zig') }}
           restore-keys: |
-            zig-cache-${{ runner.os }}-
+            zig-cache-ios-simulator-${{ runner.os }}-
         
       - name: Build project
         run: zig build -Dtarget=x86_64-ios-simulator --sysroot "$(xcrun --sdk iphonesimulator --show-sdk-path)"
