@@ -38,6 +38,7 @@ pub const renderer = struct {
 
     const fragment_shader_source = [_][*]const u8{
         \\#version 330 core
+        \\precision mediump float;
         \\out vec4 FragColor;
         \\
         \\void main() {
@@ -94,7 +95,7 @@ pub const renderer = struct {
         gl.BufferData(gl.ARRAY_BUFFER, @sizeOf(f32) * vertices.len, &vertices[0], gl.STATIC_DRAW);
 
         gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.ebo);
-        gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, @sizeOf(c_uint) * vertices.len, &indices[0], gl.STATIC_DRAW);
+        gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, @sizeOf(c_uint) * indices.len, &indices[0], gl.STATIC_DRAW);
         
         gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * @sizeOf(f32), 0);
         gl.EnableVertexAttribArray(0);

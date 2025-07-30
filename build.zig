@@ -50,7 +50,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     if (target.result.os.tag == .ios) {
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api = .gles,
-            .version = .@"2.0",
+            .version = .@"3.0",
             .extensions = &.{},
         }, b.resolveTargetQuery(.{
             .cpu_arch = builtin.cpu.arch,
@@ -167,7 +167,7 @@ fn buildApk(
 
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api = .gles,
-            .version = .@"2.0",
+            .version = .@"3.0",
             .extensions = &.{},
         }, b.resolveTargetQuery(.{
             .cpu_arch = builtin.cpu.arch,
@@ -248,7 +248,7 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
 
     const gl_bindings = glgen.generateBindingsModule(b, .{
         .api = .gles,
-        .version = .@"2.0",
+        .version = .@"3.0",
         .extensions = &.{},
     }, b.resolveTargetQuery(.{
             .cpu_arch = builtin.cpu.arch,
