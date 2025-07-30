@@ -49,7 +49,6 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
 
     if (target.result.os.tag == .ios) {
         @panic("No implementation for iOS (no Metal)");
-
     } else {
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api = .gl,
