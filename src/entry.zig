@@ -44,6 +44,7 @@ pub fn init() !void {
 
     }
 
+
     window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, c.SDL_WINDOW_OPENGL);
 
     ogl_renderer = try renderer_gl.renderer.init(window);

@@ -53,8 +53,8 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .version = .@"2.0",
             .extensions = &.{},
         }, b.resolveTargetQuery(.{
-            .cpu_arch = builtin.target.cpu.arch,
-            .os_tag = builtin.target.os.tag,
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = builtin.os.tag,
         }));
 
         gl_bindings.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "System", "Library", "Frameworks" }) });
@@ -69,10 +69,12 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .version = .@"3.3",
             .profile = .compatibility,
             .extensions = &.{},
-        }, target);
+        }, b.resolveTargetQuery(.{
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = builtin.os.tag,
+        }));
 
         exe.root_module.addImport("gl", gl_bindings);
-
     }
 
 
@@ -167,7 +169,10 @@ fn buildApk(
             .api = .gles,
             .version = .@"2.0",
             .extensions = &.{},
-        }, t);
+        }, b.resolveTargetQuery(.{
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = builtin.os.tag,
+        }));
 
         exe.root_module.addImport("gl", gl_bindings);
 
@@ -245,7 +250,10 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         .api = .gles,
         .version = .@"2.0",
         .extensions = &.{},
-    }, target);
+    }, b.resolveTargetQuery(.{
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = builtin.os.tag,
+    }));
 
     wasm.root_module.addImport("gl", gl_bindings);
 
