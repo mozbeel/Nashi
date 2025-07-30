@@ -57,9 +57,9 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.linkFramework("UIKit");
         exe.linkFramework("QuartzCore");
 
-        gl_bindings.linkFramework("OpenGLES");
-        gl_bindings.linkFramework("UIKit");
-        gl_bindings.linkFramework("QuartzCore");
+        gl_bindings.linkFramework("OpenGLES", .{});
+        gl_bindings.linkFramework("UIKit", .{});
+        gl_bindings.linkFramework("QuartzCore", .{});
 
 
         exe.root_module.addImport("gl", gl_bindings);
