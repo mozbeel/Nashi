@@ -49,7 +49,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
 
     if (target.result.os.tag == .ios) {
         const gl_bindings = glgen.generateBindingsModule(b, .{
-            .api        = .gles,
+            .api        = .gl,
             .version    = .@"3.0",
             .extensions = &.{}, 
         });
