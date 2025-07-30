@@ -54,6 +54,8 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .extensions = &.{}, 
         });
 
+        exe.linkLibC();
+
         exe.linkFramework("OpenGLES"); // For GLES 2.0
         exe.linkFramework("UIKit");
         exe.linkFramework("Foundation");
