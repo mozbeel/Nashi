@@ -3,9 +3,9 @@ const gl = @import("gl");
 const c = @import("c.zig").c;
 
 pub const renderer = struct {
-    gl_context : c.SDL_GLContext = undefined, 
-    procs : gl.ProcTable = undefined,
+    gl_context : c.SDL_GLContext = undefined,
     window : ?*c.SDL_Window = undefined,
+    var procs : gl.ProcTable = undefined;
 
     pub fn init(window: ?*c.SDL_Window) !renderer {
         var self : renderer = .{
@@ -16,31 +16,29 @@ pub const renderer = struct {
         return self;
     }
 
-
     fn prepare_opengl(self: *renderer) !void {
-        const wnd = self.window;
-        self.gl_context = c.SDL_GL_CreateContext(wnd);
+        self.gl_context = c.SDL_GL_CreateContext(self.window);
 
         if (self.gl_context == null) {
             std.debug.print("Failed to create GL context: {s}\n", .{c.SDL_GetError()});
             return error.ErrorIntializingOpenGL;
         }
 
-        if (!c.SDL_GL_MakeCurrent(wnd, self.gl_context)) {
+        if (!c.SDL_GL_MakeCurrent(self.window, self.gl_context)) {
             std.log.err("Failed to make GL context current: {s}", .{c.SDL_GetError()});
             return error.ErrorIntializingOpenGL;
         }
 
-        if (!self.procs.init(c.SDL_GL_GetProcAddress)) return error.ErrorIntializingOpenGL;
+        if (!procs.init(c.SDL_GL_GetProcAddress)) return error.ErrorIntializingOpenGL;
 
-        gl.makeProcTableCurrent(&self.procs);
+        gl.makeProcTableCurrent(&procs);
 
     }
-    
+
     pub fn draw(self: *renderer) void {
         gl.ClearColor(1, 1, 1, 1);
         gl.Clear(gl.COLOR_BUFFER_BIT);
-        _ = c.SDL_GL_SwapWindow(self.window);
+        _ = c.SDL_GL_SwapWindow(self.window.?);
 
     }
 

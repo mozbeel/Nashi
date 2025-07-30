@@ -1,16 +1,13 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("SDL3/SDL.h");
-    @cInclude("SDL3/SDL_opengl.h");
-});
+const c = @import("c.zig").c;
 const builtin = @import("builtin");
+const renderer_gl = @import("renderer_gl.zig");
 const gl = @import("gl");
 
 var window : ?*c.SDL_Window = undefined;
 pub var running : bool = true;
 
-var gl_context : c.SDL_GLContext = undefined; 
-var procs : gl.ProcTable = undefined;
+var ogl_renderer: renderer_gl.renderer = undefined;
 
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_VIDEO) == false) {
@@ -49,20 +46,7 @@ pub fn init() !void {
 
     window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, c.SDL_WINDOW_OPENGL);
 
-    gl_context = c.SDL_GL_CreateContext(window.?);
-    if (gl_context == null) {
-        std.debug.print("Failed to create GL context: {s}\n", .{c.SDL_GetError()});
-        return error.ErrorIntializingOpenGL;
-    }
-
-    if (!c.SDL_GL_MakeCurrent(window, gl_context)) {
-        std.log.err("Failed to make GL context current: {s}", .{c.SDL_GetError()});
-        return error.ErrorIntializingOpenGL;
-    }
-
-    if (!procs.init(c.SDL_GL_GetProcAddress)) return error.ErrorIntializingOpenGL;
-    
-    gl.makeProcTableCurrent(&procs);
+    ogl_renderer = try renderer_gl.renderer.init(window);
 }
 
 pub fn event() void {
@@ -77,14 +61,11 @@ pub fn event() void {
 }
 
 pub fn iterate() void {
-    gl.ClearColor(1, 1, 1, 1);
-    gl.Clear(gl.COLOR_BUFFER_BIT);
-    _ = c.SDL_GL_SwapWindow(window);
+    ogl_renderer.draw();
 }
 
 pub fn destroy() void {
-    _ = c.SDL_GL_DestroyContext(gl_context);
-    gl.makeProcTableCurrent(null);
+    ogl_renderer.destroy();
 
     c.SDL_DestroyWindow(window.?);
     c.SDL_Quit();
