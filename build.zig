@@ -48,7 +48,14 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     }
 
     if (target.result.os.tag == .ios) {
-        @panic("No implementation for ios yet");
+        const gl_bindings = glgen.generateBindingsModule(b, .{
+            .api = .gles,
+            .version = .@"2.0",
+            .extensions = &.{},
+        });
+
+        exe.root_module.addImport("gl", gl_bindings);
+
     } else {
         const gl_bindings = glgen.generateBindingsModule(b, .{
             .api = .gl,

@@ -53,8 +53,8 @@
             .hash = "sdl-0.2.5+3.2.18-7uIn9ItpggGkfEzTmJLFWO6zZqLvcL8QxOFIWyG9Cnvm",
         },
         .zigglgen = .{
-            .url = "git+https://github.com/castholm/zigglgen.git#0b8261eb00f098ea65e2a1b0a42798a2d1410ccb",
-            .hash = "zigglgen-0.4.0-bmyqLS3sLQC1iF0iqkTqw_bEDhSNK8TQoL_c16DWNbkT",
+            .url = "git+https://github.com/mozbeel/zigglgen#3fa71cd2c9efe23b35595ff835b8cc0e65822f48",
+            .hash = "zigglgen-0.4.0-bmyqLSTsLQAkkke6YV-XPRxksBYDIpMlv0_T5Ot4vDtw",
         },
     },
     .paths = .{

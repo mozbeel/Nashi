@@ -3,16 +3,25 @@ const gl = @import("gl");
 const c = @import("c.zig").c;
 
 pub const renderer = struct {
+    var procs : gl.ProcTable = undefined; // HAS to be defined as var for some reason here
+   
     gl_context : c.SDL_GLContext = undefined,
     window : ?*c.SDL_Window = undefined,
-    var procs : gl.ProcTable = undefined;
+    vbo: c_uint = 0,
+
+    const vertices = &.{
+        -0.5, -0.5, 0.0,
+        0.5, -0.5, 0.0,
+        0.0, 0.5, 0.0,
+    };
 
     pub fn init(window: ?*c.SDL_Window) !renderer {
         var self : renderer = .{
             .window = window,
         };
         try self.prepare_opengl();
-
+        
+    
         return self;
     }
 
