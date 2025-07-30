@@ -47,14 +47,26 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ "/usr", "lib" }) });
     }
 
-    const gl_bindings = glgen.generateBindingsModule(b, .{
-        .api = .gl,
-        .version = .@"3.3",
-        .profile = .compatibility,
-        .extensions = &.{},
-    });
+    if (target.result.os.tag == .ios) {
+        const gl_bindings = glgen.generateBindingsModule(b, .{
+            .api = .gl,
+            .version = .@"3.3",
+            .profile = .compatibility,
+            .extensions = &.{},
+        });
 
-    exe.root_module.addImport("gl", gl_bindings);
+        exe.root_module.addImport("gl", gl_bindings);
+
+    } else {
+         const gl_bindings = glgen.generateBindingsModule(b, .{
+            .api = .gles,
+            .version = .@"2.0",
+            .extensions = &.{},
+        });
+
+        exe.root_module.addImport("gl", gl_bindings);
+    }
+
 
     exe.linkLibrary(sdl_lib);
 
