@@ -53,7 +53,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .version = .@"2.0",
             .extensions = &.{},
         }, b.resolveTargetQuery(.{
-            .cpu_arch = builtin.cpu.arch,
+            .cpu_arch = builtin.target.cpu.arch,
             .os_tag = builtin.target.os.tag,
         }));
 
