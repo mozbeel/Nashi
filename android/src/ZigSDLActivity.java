@@ -1,4 +1,4 @@
-package com.zig.minimal; // <- Your game package name
+package com.nashi.test; // <- Your game package name
 
 import org.libsdl.app.SDLActivity;
 

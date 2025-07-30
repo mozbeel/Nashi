@@ -1,12 +1,16 @@
 const std = @import("std");
 const c = @cImport({
     @cInclude("SDL3/SDL.h");
+    @cInclude("SDL3/SDL_opengl.h");
 });
 const builtin = @import("builtin");
+const gl = @import("gl");
 
 var window : ?*c.SDL_Window = undefined;
-var renderer: ?*c.SDL_Renderer = undefined;
 pub var running : bool = true;
+
+var gl_context : c.SDL_GLContext = undefined; 
+var procs : gl.ProcTable = undefined;
 
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_VIDEO) == false) {
@@ -29,10 +33,36 @@ pub fn init() !void {
         }
     }
 
-    if(!c.SDL_CreateWindowAndRenderer("Basic SDL3", window_width, window_height, 0, &window, &renderer)) {
-        std.log.err("Failed to initialize SDL Window or Renderer: {s}", .{ c.SDL_GetError() }); 
-        return error.InitWindowOrRendererFailed;
+    if (!builtin.target.abi.isAndroid() and builtin.target.os.tag != .ios and builtin.target.os.tag != .emscripten) {
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_DOUBLEBUFFER, 1);
+
+    } else {
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_ES);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_DOUBLEBUFFER, 1);
+
     }
+
+    window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, c.SDL_WINDOW_OPENGL);
+
+    gl_context = c.SDL_GL_CreateContext(window.?);
+    if (gl_context == null) {
+        std.debug.print("Failed to create GL context: {s}\n", .{c.SDL_GetError()});
+        return error.ErrorIntializingOpenGL;
+    }
+
+    if (!c.SDL_GL_MakeCurrent(window, gl_context)) {
+        std.log.err("Failed to make GL context current: {s}", .{c.SDL_GetError()});
+        return error.ErrorIntializingOpenGL;
+    }
+
+    if (!procs.init(c.SDL_GL_GetProcAddress)) return error.ErrorIntializingOpenGL;
+    
+    gl.makeProcTableCurrent(&procs);
 }
 
 pub fn event() void {
@@ -47,17 +77,16 @@ pub fn event() void {
 }
 
 pub fn iterate() void {
-    _ = c.SDL_SetRenderDrawColor(renderer.?, 128, 30, 255, 255);
-
-    _ = c.SDL_RenderClear(renderer.?);
-
-    _ = c.SDL_RenderPresent(renderer.?);
-
+    gl.ClearColor(1, 1, 1, 1);
+    gl.Clear(gl.COLOR_BUFFER_BIT);
+    _ = c.SDL_GL_SwapWindow(window);
 }
 
 pub fn destroy() void {
-    c.SDL_Quit();
+    _ = c.SDL_GL_DestroyContext(gl_context);
+    gl.makeProcTableCurrent(null);
+
     c.SDL_DestroyWindow(window.?);
-    c.SDL_DestroyRenderer(renderer.?);
+    c.SDL_Quit();
 
 }

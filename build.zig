@@ -4,6 +4,8 @@ const android = @import("android");
 const builtin = @import("builtin");
 const root = @import("root");
 
+const glgen = @import("zigglgen");
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -44,6 +46,15 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ b.sysroot.?, "usr", "include" }) });
         exe.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ "/usr", "lib" }) });
     }
+
+    const gl_bindings = glgen.generateBindingsModule(b, .{
+        .api = .gl,
+        .version = .@"3.3",
+        .profile = .compatibility,
+        .extensions = &.{},
+    });
+
+    exe.root_module.addImport("gl", gl_bindings);
 
     exe.linkLibrary(sdl_lib);
 
@@ -132,6 +143,15 @@ fn buildApk(
         exe.linkLibrary(sdl_lib);
         exe.linkLibC();
 
+        const gl_bindings = glgen.generateBindingsModule(b, .{
+            .api = .gles,
+            .version = .@"2.0",
+            .extensions = &.{},
+        });
+
+        exe.root_module.addImport("gl", gl_bindings);
+
+
         // if building as library for Android, add this target
         // NOTE: Android has different CPU targets so you need to build a version of your
         //       code for x86, x86_64, arm, arm64 and more
@@ -162,7 +182,7 @@ fn buildApk(
         const android_sdk = apk.sdk;
         const run_step = b.step("run", "Install and run the application on an Android device");
         const adb_install = android_sdk.addAdbInstall(installed_apk.source);
-        const adb_start = android_sdk.addAdbStart("com.zig.minimal/com.zig.minimal.ZigSDLActivity");
+        const adb_start = android_sdk.addAdbStart("com.nashi.test/com.nashi.test.ZigSDLActivity");
         adb_start.step.dependOn(&adb_install.step);
         run_step.dependOn(&adb_start.step);
     }
@@ -200,6 +220,15 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     var dir = std.fs.openDirAbsolute(sysroot_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
     dir.close();
     wasm.addSystemIncludePath(.{ .cwd_relative = sysroot_include });
+
+    const gl_bindings = glgen.generateBindingsModule(b, .{
+        .api = .gles,
+        .version = .@"2.0",
+        .extensions = &.{},
+    });
+
+    wasm.root_module.addImport("gl", gl_bindings);
+
 
     const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, .{
         .optimize = optimize,
@@ -251,4 +280,3 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         emrun_cmd.addArgs(args);
     }
 }
-

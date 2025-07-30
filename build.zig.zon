@@ -52,6 +52,10 @@
             .url = "git+https://github.com/mozbeel/SDL-zig#065bd92c974b32b5ec0f05026e7012e16357983b",
             .hash = "sdl-0.2.5+3.2.18-7uIn9ItpggGkfEzTmJLFWO6zZqLvcL8QxOFIWyG9Cnvm",
         },
+        .zigglgen = .{
+            .url = "git+https://github.com/castholm/zigglgen.git#0b8261eb00f098ea65e2a1b0a42798a2d1410ccb",
+            .hash = "zigglgen-0.4.0-bmyqLS3sLQC1iF0iqkTqw_bEDhSNK8TQoL_c16DWNbkT",
+        },
     },
     .paths = .{
         "build.zig",
