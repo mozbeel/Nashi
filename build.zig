@@ -77,6 +77,13 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.root_module.addImport("gl", gl_bindings);
     }
 
+    const zalgebra = b.dependency("zalgebra", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("zalgebra", zalgebra.module("zalgebra"));
+        
+    exe.linkLibC();
 
     exe.linkLibrary(sdl_lib);
 
@@ -98,7 +105,7 @@ fn buildApk(
     optimize: std.builtin.OptimizeMode
     ) !void {
     if (android_targets.len == 0) return error.MustProvideAndroidTargets;
-    const exe_name: []const u8 = "main";
+    const exe_name: []const u8 = "Nashi";
     
 
     const android_apk: ?*android.Apk = blk: {
@@ -173,9 +180,13 @@ fn buildApk(
             .cpu_arch = builtin.cpu.arch,
             .os_tag = builtin.os.tag,
         }));
-
         exe.root_module.addImport("gl", gl_bindings);
-
+        
+        const zalgebra = b.dependency("zalgebra", .{
+            .target = t,
+            .optimize = optimize,
+        });
+        exe.root_module.addImport("zalgebra", zalgebra.module("zalgebra"));
 
         // if building as library for Android, add this target
         // NOTE: Android has different CPU targets so you need to build a version of your
@@ -255,8 +266,13 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
             .os_tag = builtin.os.tag,
     }));
 
-    wasm.root_module.addImport("gl", gl_bindings);
+    const zalgebra = b.dependency("zalgebra", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    wasm.root_module.addImport("zalgebra", zalgebra.module("zalgebra"));
 
+    wasm.root_module.addImport("gl", gl_bindings);
 
     const emcc_flags = zemscripten.emccDefaultFlags(b.allocator, .{
         .optimize = optimize,

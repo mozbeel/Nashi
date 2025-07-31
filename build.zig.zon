@@ -56,6 +56,10 @@
             .url = "git+https://github.com/mozbeel/zigglgen#5a0966f56e56db982a9694d83abf50750b10ae9b",
             .hash = "zigglgen-0.4.0-bmyqLXTsLQCCiW46uvc2iemg3wfVGlPH8zUOX8o4kspb",
         },
+        .zalgebra = .{
+            .url = "git+https://github.com/kooparse/zalgebra#412c3e1cddcf6b8494a6c008dd152c6e0ec5e846",
+            .hash = "zalgebra-0.0.0-aaiVSk5nAQA4CIV_flm1iIpWiSrVcxggA9y_aaa-TtdR",
+        },
     },
     .paths = .{
         "build.zig",

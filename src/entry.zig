@@ -9,6 +9,8 @@ pub var running : bool = true;
 
 var ogl_renderer: renderer_gl.renderer = undefined;
 
+pub var start_time: i64 = undefined;
+
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_VIDEO) == false) {
         std.log.err("Failed to initialize SDL", .{});
@@ -42,25 +44,27 @@ pub fn init() !void {
 
     }
 
+    window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, c.SDL_WINDOW_OPENGL | c.SDL_WINDOW_RESIZABLE);
 
-    window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, c.SDL_WINDOW_OPENGL);
+    start_time = std.time.microTimestamp();
 
     ogl_renderer = try renderer_gl.renderer.init(window);
 }
 
-pub fn event() void {
+pub fn event() !void {
     var sdl_event : c.SDL_Event = undefined;
     while (c.SDL_PollEvent(&sdl_event)) {
         switch (sdl_event.type) {
             c.SDL_EVENT_QUIT, c.SDL_EVENT_WINDOW_CLOSE_REQUESTED => running = false,
+            c.SDL_EVENT_WINDOW_RESIZED => try ogl_renderer.resized_window(),
             else => continue,
         }
     }
 
 }
 
-pub fn iterate() void {
-    ogl_renderer.draw();
+pub fn iterate() !void {
+    try ogl_renderer.draw();
 }
 
 pub fn destroy() void {

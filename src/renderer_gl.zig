@@ -1,7 +1,10 @@
 const std = @import("std");
-const gl = @import("gl");
-const c = @import("c.zig").c;
 const builtin = @import("builtin");
+
+const entry = @import("entry.zig");
+const c = @import("c.zig").c;
+const gl = @import("gl");
+const za = @import("zalgebra");
 
 pub const renderer = struct {
     gl_context : c.SDL_GLContext = undefined,
@@ -12,18 +15,37 @@ pub const renderer = struct {
     vertex_shader: c_uint = 0,
     fragment_shader: c_uint = 0,
     shader_program: c_uint = 0,
+    mvp_loc: c_int = 0,
+    window_width: c_int = 0,
+    window_height: c_int = 0,
 
     var procs : gl.ProcTable = undefined; // HAS to be defined as var for some reason here
     const vertices = [_]f32{
-        0.5, 0.5, 0.0, // top right
-        0.5, -0.5, 0.0, // bottom right
-        -0.5, -0.5, 0.0, // bottom left
-        -0.5, 0.5, 0.0, // top left
+        //  x      y      z     r    g    b
+        -0.5, -0.5,  0.5, 1.0, 0.0, 0.0,
+         0.5, -0.5,  0.5, 0.0, 1.0, 0.0,
+         0.5,  0.5,  0.5, 0.0, 0.0, 1.0,
+        -0.5,  0.5,  0.5, 1.0, 1.0, 1.0,
+        -0.5, -0.5, -0.5, 1.0, 1.0, 0.0,
+         0.5, -0.5, -0.5, 0.0, 1.0, 1.0,
+         0.5,  0.5, -0.5, 1.0, 0.0, 1.0,
+        -0.5,  0.5, -0.5, 0.5, 0.5, 0.5,
+
     };
 
     const indices = [_]c_uint{
-        0, 1, 3,
-        1, 2, 3,
+        // Front face
+        0, 1, 2, 2, 3, 0,
+        // Right face
+        1, 5, 6, 6, 2, 1,
+        // Back face
+        5, 4, 7, 7, 6, 5,
+        // Left face
+        4, 0, 3, 3, 7, 4,
+        // Top face
+        3, 2, 6, 6, 7, 3,
+        // Bottom face
+        4, 5, 1, 1, 0, 4,
     };
    
     // Zig terminates every string automatically which breaks if broken into multiple lines, so I'm using a multi-line string here for readability
@@ -33,17 +55,29 @@ pub const renderer = struct {
         or builtin.target.os.tag == .ios) [_][*]const u8{
         \\#version 300 es
         \\layout (location = 0) in vec3 aPos;
+        \\layout (location = 1) in vec3 aColor;
+        \\
+        \\out vec3 vertexColor;
+        \\
+        \\uniform mat4 mvp;
         \\
         \\void main() {
-        \\  gl_Position = vec4(aPos, 1.0);
+        \\  gl_Position = mvp *vec4(aPos, 1.0);
+        \\  vertexColor = aColor;
         \\}
         \\
     } else [_][*]const u8{
         \\#version 330 core
         \\layout (location = 0) in vec3 aPos;
+        \\layout (location = 1) in vec3 aColor;
+        \\
+        \\out vec3 vertexColor;
+        \\
+        \\uniform mat4 mvp;
         \\
         \\void main() {
-        \\  gl_Position = vec4(aPos, 1.0);
+        \\  gl_Position = mvp * vec4(aPos, 1.0);
+        \\  vertexColor = aColor;
         \\}
         \\
     };
@@ -54,18 +88,23 @@ pub const renderer = struct {
         or builtin.target.os.tag == .ios) [_][*]const u8{
         \\#version 300 es
         \\precision mediump float;
+        \\precision mediump int;
+        \\
+        \\in vec3 vertexColor;
         \\out vec4 FragColor;
         \\
         \\void main() {
-        \\  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        \\  FragColor = vec4(vertexColor, 1.0f);
         \\}
         \\
     } else [_][*]const u8{
         \\#version 330 core
+        \\
+        \\in vec3 vertexColor;
         \\out vec4 FragColor;
         \\
         \\void main() {
-        \\  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        \\  FragColor = vec4(vertexColor, 1.0f);
         \\}
         \\
     };
@@ -79,6 +118,7 @@ pub const renderer = struct {
        
         self.create_shaders();
         self.create_buffers();
+        self.create_uniforms();
     
         return self;
     }
@@ -100,6 +140,10 @@ pub const renderer = struct {
 
         gl.makeProcTableCurrent(&procs);
 
+        if(!c.SDL_GetWindowSizeInPixels(self.window, &self.window_width, &self.window_height)) return error.CouldntGetWindowSize;
+        gl.Viewport(0, 0, @intCast(self.window_width), @intCast(self.window_height));
+
+        gl.Enable(gl.DEPTH_TEST);
     }
 
     fn create_buffers(self: *renderer) void {
@@ -120,8 +164,11 @@ pub const renderer = struct {
         gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.ebo);
         gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, @sizeOf(c_uint) * indices.len, &indices[0], gl.STATIC_DRAW);
         
-        gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * @sizeOf(f32), 0);
+        gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 6 * @sizeOf(f32), 0);
         gl.EnableVertexAttribArray(0);
+
+        gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 6 * @sizeOf(f32), 3 * @sizeOf(f32));
+        gl.EnableVertexAttribArray(1);
     }
 
     fn create_shaders(self: *renderer) void {
@@ -166,18 +213,51 @@ pub const renderer = struct {
         return shader;
     }
 
-    pub fn draw(self: *renderer) void {
+    fn create_uniforms(self: *renderer) void {
+        self.mvp_loc = gl.GetUniformLocation(self.shader_program, "mvp");
+    }
+
+    pub fn draw(self: *renderer) !void {
         gl.ClearColor(128.0/255.0, 30.0/255.0, 1, 1);
-        gl.Clear(gl.COLOR_BUFFER_BIT);
+        
+        var to_clear : c_uint = gl.COLOR_BUFFER_BIT;
+        to_clear |= gl.DEPTH_BUFFER_BIT;
+        gl.Clear(to_clear);
 
         gl.UseProgram(self.shader_program);
+        try self.update_uniforms();
+        
         gl.BindVertexArray(self.vao);
         
         gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.ebo);
 
-        gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+        gl.DrawElements(gl.TRIANGLES, indices.len, gl.UNSIGNED_INT, 0);
         
         _ = c.SDL_GL_SwapWindow(self.window.?);
+
+    }
+
+    fn update_uniforms(self: *renderer) !void {
+        const w: f32 = @floatFromInt(self.window_width);
+        const h: f32 = @floatFromInt(self.window_height);
+
+        const projection = za.perspective(45.0, w / h, 0.1, 1000.0);
+        const view = za.lookAt(za.Vec3.new(1.5, 1.5, -3.0), za.Vec3.zero(), za.Vec3.up());
+        var model = za.Mat4.fromTranslate(za.Vec3.new(0.0, 0.0, 0.0));
+
+        const now = std.time.microTimestamp();
+        const elapsed_ms = now - entry.start_time;
+        model = model.rotate(@as(f32, @floatCast(@as(f64, @floatFromInt(elapsed_ms))))/1_000_0, za.Vec3.new(0.0, 1.0, 0.0));
+
+        const mvp = za.Mat4.mul(projection, view.mul(model));
+
+        gl.UniformMatrix4fv(self.mvp_loc, 1, gl.FALSE, @as([*c]const f32, @ptrCast(&mvp)));
+    }
+
+    pub fn resized_window(self: *renderer) !void {
+        if(!c.SDL_GetWindowSizeInPixels(self.window, &self.window_width, &self.window_height)) return error.CouldntGetWindowSize;
+    
+        gl.Viewport(0, 0, @intCast(self.window_width), @intCast(self.window_height));
 
     }
 

@@ -17,8 +17,8 @@ export fn SDL_main(argc: c_int, argv: [*]*?*const u8) callconv(.c) c_int {
     defer entry.destroy();
 
     while (entry.running) {
-        entry.event();
-        entry.iterate();
+        entry.event() catch return 1;
+        entry.iterate() catch return 1;
     }
     return 0;
 }

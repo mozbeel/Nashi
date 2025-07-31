@@ -7,8 +7,8 @@ pub fn main() !void {
     defer entry.destroy();
 
     while (entry.running) {
-        entry.event();
-        entry.iterate();
+        try entry.event();
+        try entry.iterate();
     }
 }
 

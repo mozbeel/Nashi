@@ -13,8 +13,8 @@ fn tick() callconv(.c) void {
         zemscripten.cancelMainLoop();
     }
 
-    entry.event();
-    entry.iterate();
+    entry.event() catch { entry.running = false; };
+    entry.iterate() catch { entry.running = false; };
 }
 
 export fn main(argc: c_int, argv: [*c]const [*c]const u8) callconv(.c) u8 {
