@@ -1,6 +1,7 @@
 const std = @import("std");
 const gl = @import("gl");
 const c = @import("c.zig").c;
+const builtin = @import("builtin");
 
 pub const renderer = struct {
     gl_context : c.SDL_GLContext = undefined,
@@ -26,22 +27,47 @@ pub const renderer = struct {
     };
    
     // Zig terminates every string automatically which breaks if broken into multiple lines, so I'm using a multi-line string here for readability
-    const vertex_shader_source = [_][*]const u8{
+    const vertex_shader_source = if(
+        builtin.target.abi == .android 
+        or builtin.target.os.tag == .emscripten 
+        or builtin.target.os.tag == .ios) [_][*]const u8{
         \\#version 300 es
         \\layout (location = 0) in vec3 aPos;
+        \\
+        \\void main() {
+        \\  gl_Position = vec4(aPos, 1.0);
+        \\}
+        \\
+    } else [_][*]const u8{
+        \\#version 330 core
+        \\layout (location = 0) in vec3 aPos;
+        \\
         \\void main() {
         \\  gl_Position = vec4(aPos, 1.0);
         \\}
         \\
     };
 
-    const fragment_shader_source = [_][*]const u8{
+    const fragment_shader_source = if(
+        builtin.target.abi == .android 
+        or builtin.target.os.tag == .emscripten 
+        or builtin.target.os.tag == .ios) [_][*]const u8{
         \\#version 300 es
         \\precision mediump float;
         \\out vec4 FragColor;
+        \\
         \\void main() {
         \\  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
         \\}
+        \\
+    } else [_][*]const u8{
+        \\#version 330 core
+        \\out vec4 FragColor;
+        \\
+        \\void main() {
+        \\  FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        \\}
+        \\
     };
 
 
