@@ -68,6 +68,10 @@
             .url = "git+https://github.com/Snektron/vulkan-zig?ref=zig-0.14-compat#2be3eefdfe5255beb7ed5cb0a14d8d2da35dc00c",
             .hash = "vulkan-0.0.0-r7Ytx25WAwD68cFINm-HH0vC_zJqVIpgeby404eC5MGy",
         },
+        .zwindows = .{
+            .url = "git+https://github.com/zig-gamedev/zwindows#ebd1d696386a7e37728d2be9479af15f45d884b3",
+            .hash = "zwindows-0.2.0-dev-xMZ1u9hgDABY0PTdtNQlpi3Gi06AP1BEGunM7fC9Mijw",
+        },
     },
     .paths = .{
         "build.zig",

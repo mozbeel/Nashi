@@ -17,13 +17,14 @@ pub const renderer = struct {
             .window = window,
         };
         
-        self.prepare_vulkan(); 
+        self.prepare_vulkan();
 
         return self;
     }
 
     fn prepare_vulkan(self: *renderer) void {
         _ = self;
+
         // Load Vulkan
         vkb = vk.BaseWrapper.load(@as(vk.PfnGetInstanceProcAddr, @ptrCast(&c.SDL_Vulkan_GetVkGetInstanceProcAddr)));
     }
@@ -32,11 +33,11 @@ pub const renderer = struct {
         _ = self;
     }
 
-    pub fn destroy(self: *renderer) void {
+    pub fn resized_window(self: *renderer) void {
         _ = self;
     }
 
-    pub fn resized_window(self: *renderer) void {
+    pub fn destroy(self: *renderer) void {
         _ = self;
     }
 };
