@@ -31,7 +31,7 @@ Nashi is a modern, high-performance rendering library built with a focus on simp
 - Mobile
   - iOS (using OpenGL ES 3.0)
   - Android (using OpenGL ES 3.0)
-- Web (using OpenGL ES 3.0)
+- Web (using Emscripten's OpenGL ES 3.0)
 
 ## Examples
 
