@@ -1,13 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig").c;
 const builtin = @import("builtin");
-const renderer_gl = @import("renderer_gl.zig");
-const gl = @import("gl");
+const renderer_vk = @import("renderer_vk.zig");
 
 var window : ?*c.SDL_Window = undefined;
 pub var running : bool = true;
 
-var ogl_renderer: renderer_gl.renderer = undefined;
+var renderer: renderer_vk.renderer = undefined;
 
 pub var start_time: i64 = undefined;
 
@@ -48,7 +47,7 @@ pub fn init() !void {
 
     start_time = std.time.microTimestamp();
 
-    ogl_renderer = try renderer_gl.renderer.init(window);
+    renderer = try renderer_vk.renderer.init(window);
 }
 
 pub fn event() !void {
@@ -56,7 +55,7 @@ pub fn event() !void {
     while (c.SDL_PollEvent(&sdl_event)) {
         switch (sdl_event.type) {
             c.SDL_EVENT_QUIT, c.SDL_EVENT_WINDOW_CLOSE_REQUESTED => running = false,
-            c.SDL_EVENT_WINDOW_RESIZED => try ogl_renderer.resized_window(),
+            c.SDL_EVENT_WINDOW_RESIZED => renderer.resized_window(),
             else => continue,
         }
     }
@@ -64,11 +63,11 @@ pub fn event() !void {
 }
 
 pub fn iterate() !void {
-    try ogl_renderer.draw();
+    renderer.draw();
 }
 
 pub fn destroy() void {
-    ogl_renderer.destroy();
+    renderer.destroy();
 
     c.SDL_DestroyWindow(window.?);
     c.SDL_Quit();

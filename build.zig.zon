@@ -60,6 +60,14 @@
             .url = "git+https://github.com/kooparse/zalgebra#412c3e1cddcf6b8494a6c008dd152c6e0ec5e846",
             .hash = "zalgebra-0.0.0-aaiVSk5nAQA4CIV_flm1iIpWiSrVcxggA9y_aaa-TtdR",
         },
+        .vulkan_headers = .{
+            .url = "git+https://github.com/KhronosGroup/Vulkan-Headers#89268a6d17fc87003b209a1422c17ab288be99a0",
+            .hash = "N-V-__8AAKDR9QE0UDIcMBqpmUjBm5ayQHNNVb8JuOCy4GOo",
+        },
+        .vulkan = .{
+            .url = "git+https://github.com/Snektron/vulkan-zig?ref=zig-0.14-compat#2be3eefdfe5255beb7ed5cb0a14d8d2da35dc00c",
+            .hash = "vulkan-0.0.0-r7Ytx25WAwD68cFINm-HH0vC_zJqVIpgeby404eC5MGy",
+        },
     },
     .paths = .{
         "build.zig",

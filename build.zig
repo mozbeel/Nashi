@@ -30,7 +30,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     });
 
     const exe = b.addExecutable(.{
-        .name = "zig_sdl3_cross_template",
+        .name = "Nashi",
         .root_module = exe_mod,
     });
 
@@ -82,7 +82,12 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         .optimize = optimize,
     });
     exe.root_module.addImport("zalgebra", zalgebra.module("zalgebra"));
-        
+
+    const vulkan = b.dependency("vulkan", .{
+        .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
+    });
+    exe.root_module.addImport("vulkan", vulkan.module("vulkan-zig"));
+    
     exe.linkLibC();
 
     exe.linkLibrary(sdl_lib);
@@ -188,6 +193,12 @@ fn buildApk(
         });
         exe.root_module.addImport("zalgebra", zalgebra.module("zalgebra"));
 
+        const vulkan = b.dependency("vulkan", .{
+            .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
+        });
+        exe.root_module.addImport("vulkan", vulkan.module("vulkan-zig"));
+
+
         // if building as library for Android, add this target
         // NOTE: Android has different CPU targets so you need to build a version of your
         //       code for x86, x86_64, arm, arm64 and more
@@ -229,7 +240,7 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     b.default_step.dependOn(activateEmsdk);
 
     const wasm = b.addStaticLibrary(.{
-        .name = "zig_sdl3_cross_template",
+        .name = "Nashi",
         .root_source_file = b.path("src/main-web.zig"),
         .target = target,
         .optimize = optimize,
