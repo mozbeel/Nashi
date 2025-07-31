@@ -85,6 +85,10 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
 
     const vulkan = b.dependency("vulkan", .{
         .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
+        .target = b.resolveTargetQuery(.{
+            .cpu_arch = builtin.cpu.arch,
+            .os_tag = builtin.os.tag,
+        }),
     });
     exe.root_module.addImport("vulkan", vulkan.module("vulkan-zig"));
     
