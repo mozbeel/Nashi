@@ -37,8 +37,8 @@
     // internet connectivity.
     .dependencies = .{
         .zemscripten = .{
-            .url = "git+https://github.com/zig-gamedev/zemscripten#530922576303be7e508f91dc4d01c4ef0313354a",
-            .hash = "zemscripten-0.2.0-dev-sRlDqLZNAACIhNm0fieWGFmmzm9u7DDQIXe0bu_SmRop",
+            .url = "git+https://github.com/mozbeel/zemscripten#15eb0c9b5b5f7aab7ff28dc1bf7d5195e2bb66f0",
+            .hash = "zemscripten-0.2.0-dev-sRlDqLZNAABqYJZMdZSczedrT29D5Wu2t5kLci0yd9uU",
         },
         .emsdk = .{
             .url = "https://github.com/emscripten-core/emsdk/archive/refs/tags/4.0.3.tar.gz",

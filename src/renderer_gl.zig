@@ -258,7 +258,6 @@ pub const renderer = struct {
         if(!c.SDL_GetWindowSizeInPixels(self.window, &self.window_width, &self.window_height)) return error.CouldntGetWindowSize;
     
         gl.Viewport(0, 0, @intCast(self.window_width), @intCast(self.window_height));
-
     }
 
 

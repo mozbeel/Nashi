@@ -32,6 +32,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const exe = b.addExecutable(.{
         .name = "Nashi",
         .root_module = exe_mod,
+        .use_llvm = true,
     });
 
     const sdl3 = b.dependency("sdl", .{
@@ -90,6 +91,7 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.linkFramework("Foundation");
         exe.linkFramework("QuartzCore");
     }
+
 
     const zalgebra = b.dependency("zalgebra", .{
         .target = target,
@@ -175,15 +177,18 @@ fn buildApk(
             .target = t,
             .optimize = optimize,
             .root_source_file = b.path("src/main-android.zig"),
+
         });
 
         var exe: *std.Build.Step.Compile = if (t.result.abi.isAndroid()) b.addLibrary(.{
             .name = exe_name,
             .root_module = app_module,
             .linkage = .dynamic,
+            .use_llvm = true,
         }) else b.addExecutable(.{
             .name = exe_name,
             .root_module = app_module,
+            .use_llvm = true,
         });
 
         const sdl = b.dependency("sdl", .{

@@ -1,12 +1,12 @@
 const std = @import("std");
 const c = @import("c.zig").c;
 const builtin = @import("builtin");
-const renderer_vk = @import("renderer_vk.zig");
+const renderer_gl = @import("renderer_gl.zig");
 
 var window : ?*c.SDL_Window = undefined;
 pub var running : bool = true;
 
-var renderer: renderer_vk.renderer = undefined;
+var renderer: renderer_gl.renderer = undefined;
 
 pub var start_time: i64 = undefined;
 
@@ -32,19 +32,19 @@ pub fn init() !void {
     }
 
     if (!builtin.target.abi.isAndroid() and builtin.target.os.tag != .ios and builtin.target.os.tag != .emscripten) {
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
 
     } else {
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 0);
-        //_ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_ES);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_ES);
 
     }
 
     window =  c.SDL_CreateWindow("Nashi + SDL3", window_width, window_height, 
-          c.SDL_WINDOW_VULKAN 
+          c.SDL_WINDOW_OPENGL 
         | c.SDL_WINDOW_RESIZABLE);
 
     if (window == null) {
@@ -53,7 +53,7 @@ pub fn init() !void {
     }
     start_time = std.time.microTimestamp();
 
-    renderer = try renderer_vk.renderer.init(window);
+    renderer = try renderer_gl.renderer.init(window);
 }
 
 pub fn event() !void {
@@ -61,7 +61,7 @@ pub fn event() !void {
     while (c.SDL_PollEvent(&sdl_event)) {
         switch (sdl_event.type) {
             c.SDL_EVENT_QUIT, c.SDL_EVENT_WINDOW_CLOSE_REQUESTED => running = false,
-            c.SDL_EVENT_WINDOW_RESIZED => renderer.resized_window(),
+            c.SDL_EVENT_WINDOW_RESIZED => try renderer.resized_window(),
             else => continue,
         }
     }
@@ -69,7 +69,7 @@ pub fn event() !void {
 }
 
 pub fn iterate() !void {
-    renderer.draw();
+    try renderer.draw();
 }
 
 pub fn destroy() void {
