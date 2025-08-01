@@ -6,8 +6,6 @@ const root = @import("root");
 
 const glgen = @import("zigglgen");
 
-
-
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -34,7 +32,6 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const exe = b.addExecutable(.{
         .name = "Nashi",
         .root_module = exe_mod,
-        
     });
 
     const sdl3 = b.dependency("sdl", .{
