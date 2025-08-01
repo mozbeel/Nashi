@@ -77,6 +77,20 @@ fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
         exe.root_module.addImport("gl", gl_bindings);
     }
 
+    if (target.result.os.tag == .ios or target.result.os.tag == .macos) {
+        const objc = b.dependency("zig_objc", .{
+            .target = target,
+            .optimize = optimize,
+        });
+
+        exe.root_module.addImport("objc", objc.module("objc"));
+
+        exe.linkFramework("Metal");
+        exe.linkFramework("MetalKit");
+        exe.linkFramework("Foundation");
+        exe.linkFramework("QuartzCore");
+    }
+
     const zalgebra = b.dependency("zalgebra", .{
         .target = target,
         .optimize = optimize,
