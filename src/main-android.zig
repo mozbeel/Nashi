@@ -13,6 +13,7 @@ else
 export fn SDL_main(argc: c_int, argv: [*]*?*const u8) callconv(.c) c_int {
     _ = argc;
     _ = argv;
+    std.log.debug("Hello Nashi!", .{});
     entry.init() catch return 1;
     defer entry.destroy();
 

@@ -6,6 +6,8 @@ const root = @import("root");
 
 const glgen = @import("zigglgen");
 
+
+
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -24,14 +26,15 @@ pub fn build(b: *std.Build) !void {
 
 fn buildBin(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !void {
     const exe_mod = b.createModule(.{
-        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
+        .root_source_file = b.path("src/main.zig"),
     });
 
     const exe = b.addExecutable(.{
         .name = "Nashi",
         .root_module = exe_mod,
+        
     });
 
     const sdl3 = b.dependency("sdl", .{
@@ -177,9 +180,10 @@ fn buildApk(
             .root_source_file = b.path("src/main-android.zig"),
         });
 
-        var exe: *std.Build.Step.Compile = if (t.result.abi.isAndroid()) b.addSharedLibrary(.{
+        var exe: *std.Build.Step.Compile = if (t.result.abi.isAndroid()) b.addLibrary(.{
             .name = exe_name,
             .root_module = app_module,
+            .linkage = .dynamic,
         }) else b.addExecutable(.{
             .name = exe_name,
             .root_module = app_module,
@@ -213,15 +217,9 @@ fn buildApk(
 
         const vulkan = b.dependency("vulkan", .{
             .registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml"),
-            .target = b.resolveTargetQuery(.{
-                .cpu_arch = builtin.cpu.arch,
-                .os_tag = builtin.os.tag,
-            }),
-
         });
         exe.root_module.addImport("vulkan", vulkan.module("vulkan-zig"));
-
-
+        
         // if building as library for Android, add this target
         // NOTE: Android has different CPU targets so you need to build a version of your
         //       code for x86, x86_64, arm, arm64 and more
@@ -262,12 +260,16 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     const activateEmsdk = zemscripten.activateEmsdkStep(b);
     b.default_step.dependOn(activateEmsdk);
 
-    const wasm = b.addStaticLibrary(.{
-        .name = "Nashi",
+    const wasm_mod = b.addModule("wasm", .{
         .root_source_file = b.path("src/main-web.zig"),
         .target = target,
         .optimize = optimize,
-        .link_libc = true,
+    });
+
+    const wasm = b.addLibrary(.{
+        .name = "Nashi",
+        .root_module = wasm_mod,
+        .linkage = .static,
     });
 
     const zemscripten_dep = b.dependency("zemscripten", .{});
@@ -287,8 +289,6 @@ fn buildWeb(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.built
     sdl3.artifact("SDL3").addSystemIncludePath(emsdk_sysroot_include_path);
 
     const sysroot_include = b.pathJoin(&.{ b.sysroot.?, "include" });
-    var dir = std.fs.openDirAbsolute(sysroot_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
-    dir.close();
     wasm.addSystemIncludePath(.{ .cwd_relative = sysroot_include });
 
     const gl_bindings = glgen.generateBindingsModule(b, .{

@@ -57,25 +57,25 @@
             .hash = "zigglgen-0.4.0-bmyqLXTsLQCCiW46uvc2iemg3wfVGlPH8zUOX8o4kspb",
         },
         .zalgebra = .{
-            .url = "git+https://github.com/kooparse/zalgebra#412c3e1cddcf6b8494a6c008dd152c6e0ec5e846",
-            .hash = "zalgebra-0.0.0-aaiVSk5nAQA4CIV_flm1iIpWiSrVcxggA9y_aaa-TtdR",
+            .url = "git+https://github.com/mozbeel/zalgebra?ref=goodbye-usingnamespace#261c78f85ccfc4999236c92bbce648e156d126a0",
+            .hash = "zalgebra-0.0.0-aaiVStpuAQCi6NlXwXDaUxEsvSIDe1KSJd4_9HDbTEd5",
         },
         .vulkan_headers = .{
             .url = "git+https://github.com/KhronosGroup/Vulkan-Headers#89268a6d17fc87003b209a1422c17ab288be99a0",
             .hash = "N-V-__8AAKDR9QE0UDIcMBqpmUjBm5ayQHNNVb8JuOCy4GOo",
         },
         .vulkan = .{
-            .url = "git+https://github.com/Snektron/vulkan-zig?ref=zig-0.14-compat#2be3eefdfe5255beb7ed5cb0a14d8d2da35dc00c",
-            .hash = "vulkan-0.0.0-r7Ytx25WAwD68cFINm-HH0vC_zJqVIpgeby404eC5MGy",
+            .url = "git+https://github.com/Snektron/vulkan-zig#ed429842b8ad60966bc3b8b214606d8a5714f99e",
+            .hash = "vulkan-0.0.0-r7Ytx5w-AwC04xBpfzcuIjGyYv2z6xb1i49ZUeNUgT5H",
         },
         .zwindows = .{
             .url = "git+https://github.com/zig-gamedev/zwindows#ebd1d696386a7e37728d2be9479af15f45d884b3",
             .hash = "zwindows-0.2.0-dev-xMZ1u9hgDABY0PTdtNQlpi3Gi06AP1BEGunM7fC9Mijw",
         },
-        .zig_objc = .{
-            .url = "git+https://github.com/mitchellh/zig-objc#1ab06dde464e24bd4db56f6639de92ca16478bc5",
-            .hash = "zig_objc-0.0.0-Ir_SpwkUAQBuD4EZduOtQ4LYQpNizYhYBMsqC60IuU9L",
-        },
+        //.zig_objc = .{
+        //    .url = "git+https://github.com/mitchellh/zig-objc#1ab06dde464e24bd4db56f6639de92ca16478bc5",
+        //    .hash = "zig_objc-0.0.0-Ir_SpwkUAQBuD4EZduOtQ4LYQpNizYhYBMsqC60IuU9L",
+        //},
     },
     .paths = .{
         "build.zig",
