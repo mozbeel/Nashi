@@ -50,7 +50,3 @@ None (yet)
 ## Getting Started
 
 1. Clone the repository:
-
-## Glad2
-https://gen.glad.sh/#generator=c&api=egl%3D1.4%2Cgl%3D3.3%2Cgles1%3D1.0%2Cgles2%3D2.0%2Cglsc2%3D2.0%2Cglx%3D1.4%2Cvulkan%3D1.2%2Cvulkansc%3D1.2%2Cwgl%3D1.0&profile=gl%3Dcompatibility%2Cgles1%3Dcommon&options=HEADER_ONLY%2CMX
-
